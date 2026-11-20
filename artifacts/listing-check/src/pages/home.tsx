@@ -9,6 +9,7 @@ import {
 import { format } from "date-fns";
 import { Shell, Eyebrow, OutcomeChip, Skel, ErrorPanel, btnPrimary, btnGhost } from "@/components/bits";
 import { money, apiError } from "@/lib/helpers";
+import { MarketplaceNetwork } from "@/components/marketplace-network";
 
 const EUIPO =
   "https://euipo.europa.eu/tunnel-web/secure/webdav/guest/document_library/observatory/documents/reports/IP_youth_scoreboard_study_2022/executiveSummary/executive_summary_2022_en.pdf";
@@ -70,6 +71,8 @@ export default function Home() {
           </p>
         )}
       </section>
+
+      <MarketplaceNetwork />
 
       <section className="mt-10">
         <div className="flex items-baseline justify-between">

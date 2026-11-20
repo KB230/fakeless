@@ -1,0 +1,35 @@
+.marketplace-network {
+  margin-top: 2rem;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  border: 1px solid #32352e;
+  border-radius: 24px;
+  background: #10120f;
+  color: #eeeee5;
+}
+.network-heading { padding: 30px 24px 0; position: relative; z-index: 2; }
+.network-kicker { font-family: monospace; font-size: 9px; letter-spacing: .15em; text-transform: uppercase; color: #aab59b; }
+.network-heading h2 { margin: 14px 0 12px; font-family: Georgia, serif; font-size: clamp(30px, 5vw, 40px); font-weight: 400; line-height: 1.08; letter-spacing: -.04em; }
+.network-heading h2 em { color: #c1cbaa; font-weight: 400; }
+.network-heading p { color: #b1b6ab; font-size: 13px; line-height: 1.6; max-width: 350px; }
+.network-stage { position: relative; aspect-ratio: 1; margin: 6px 10px 0; background: radial-gradient(ellipse, #9ea98c0c, transparent 65%); }
+.network-lines { position: absolute; width: 100%; height: 100%; overflow: visible; }
+.network-orbit { fill: none; stroke: #a3ae8e25; stroke-width: .18; stroke-dasharray: .5 2; transform-origin: center; animation: network-orbit-spin 100s linear infinite; }
+.network-orbit-inner { animation-direction: reverse; }
+.network-signal { fill: none; stroke: #c7d7af; stroke-width: .35; stroke-dasharray: 2 60; animation: network-flow 6s linear infinite; opacity: .7; }
+.network-node { position: absolute; transform: translate(-50%, -50%); display: grid; place-items: center; width: 18%; aspect-ratio: 1.1; border: 1px solid #5b615147; border-radius: 15px; background: linear-gradient(145deg, #30352c, #171a16 75%); box-shadow: inset 0 1px 0 #ffffff16, 0 7px 20px #0007; transition: border-color .25s, box-shadow .25s; }
+.network-node:hover { border-color: #aab994; box-shadow: 0 0 24px #b8ce8c20; }
+.network-node span { font-size: clamp(9px, 2.6vw, 14px); font-weight: 500; letter-spacing: -.035em; color: #e0e3d7; }
+.network-hub { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; justify-content: center; width: 24%; aspect-ratio: 1; border-radius: 50%; border: 1px solid #c3d2a45c; background: radial-gradient(circle at 35% 25%, #e2e9d0, #b1be99); color: #182012; box-shadow: 0 0 0 7px #c6d9a609, 0 0 45px #b6d58912; }
+.network-hub > span { font-family: Georgia, serif; font-size: clamp(36px, 10vw, 60px); font-style: italic; line-height: .9; }
+.network-hub small { font: 7px monospace; letter-spacing: .16em; margin-top: 7px; }
+.network-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 14px 18px; border-top: 1px solid #ffffff12; }
+.network-foot p { font: 9px/1.6 monospace; color: #b2bba6; max-width: 240px; }
+.network-status-dot { display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: #b4c59a; margin-right: 5px; vertical-align: middle; }
+.network-foot button { flex-shrink: 0; min-height: 44px; font: 10px monospace; color: #d2dac4; padding: 0 5px; border-radius: 4px; }
+.network-foot button:focus-visible { outline: 2px solid #c3d2a4; outline-offset: 3px; }
+.network-paused *, .network-paused .network-signal { animation-play-state: paused; }
+@keyframes network-flow { from { stroke-dashoffset: 62; } to { stroke-dashoffset: 0; } }
+@keyframes network-orbit-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .marketplace-network * { animation: none !important; transition: none !important; } }
