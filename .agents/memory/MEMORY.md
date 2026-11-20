@@ -1,0 +1,1 @@
+- [Listing Check decisions](listing-check-decisions.md) — user's own OpenAI key; live checks never pass on demo references

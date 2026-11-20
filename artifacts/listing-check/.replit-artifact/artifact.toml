@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Listing Check"
+description = "A mobile-first counterfeit screening step for online clothing resellers. Sellers select a product profile (starting with the Arc'teryx Beta LT jacket), capture the logo, wash tag, zipper and seam tape, and a vision model plus backend rules decide: Passed listing checks, Retake requested, or Manual review. Includes voice capture guidance via ElevenLabs and a no-upload demo."
+version = "1.0.0"
+id = "artifacts/listing-check"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25367
+
+[services.development]
+run = "pnpm --filter @workspace/listing-check run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/listing-check", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/listing-check/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25367"
+BASE_PATH = "/"

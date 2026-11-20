@@ -3,20 +3,29 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Listing Check API — counterfeit screening step for resale listings
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: profiles
+    description: Product reference profiles
+  - name: checks
+    description: Listing checks
+  - name: demo
+    description: Demo cases (no uploads)
+  - name: voice
+    description: Voice capture guidance
+  - name: stats
+    description: Aggregates
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +33,282 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /profiles:
+    get:
+      operationId: listProfiles
+      tags: [profiles]
+      summary: List product reference profiles
+      responses:
+        "200":
+          description: Profiles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductProfile"
+  /profiles/{profileId}:
+    get:
+      operationId: getProfile
+      tags: [profiles]
+      parameters:
+        - name: profileId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductProfile"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /checks:
+    get:
+      operationId: listChecks
+      tags: [checks]
+      summary: Recent live checks (demo checks excluded)
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 50 }
+      responses:
+        "200":
+          description: Recent checks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CheckSummary"
+    post:
+      operationId: createCheck
+      tags: [checks]
+      summary: Start a live listing check
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Check"
+        "400":
+          description: Invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /checks/{checkId}:
+    get:
+      operationId: getCheck
+      tags: [checks]
+      parameters:
+        - name: checkId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Check
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Check"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /checks/{checkId}/photos:
+    post:
+      operationId: uploadCheckPhoto
+      tags: [checks]
+      summary: Upload a photo for one inspection step and get vision observations. Replaces any earlier photo for the same step.
+      parameters:
+        - name: checkId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PhotoUpload"
+      responses:
+        "200":
+          description: Photo analyzed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckPhoto"
+        "400":
+          description: Invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Photo analysis not configured or unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /checks/{checkId}/wash-tag:
+    put:
+      operationId: setWashTagPresence
+      tags: [checks]
+      summary: Record whether the item has an inside wash/care tag
+      parameters:
+        - name: checkId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WashTagAnswer"
+      responses:
+        "200":
+          description: Updated check
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Check"
+  /checks/{checkId}/evaluate:
+    post:
+      operationId: evaluateCheck
+      tags: [checks]
+      summary: Run backend decision rules over the recorded evidence
+      parameters:
+        - name: checkId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Check with decision
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Check"
+  /checks/{checkId}/publish:
+    post:
+      operationId: publishListing
+      tags: [checks]
+      summary: Mock-publish the listing. Rejected with 409 unless the backend recorded a pass.
+      parameters:
+        - name: checkId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Published (mock)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublishResult"
+        "409":
+          description: Publishing blocked — no recorded pass
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /demo-cases:
+    get:
+      operationId: listDemoCases
+      tags: [demo]
+      responses:
+        "200":
+          description: Demo cases
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DemoCase"
+  /demo-cases/{caseId}/run:
+    post:
+      operationId: runDemoCase
+      tags: [demo]
+      summary: Create a demo check with pre-recorded sample evidence and evaluate it with the same backend rules
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Demo check with decision
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Check"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /voice/status:
+    get:
+      operationId: getVoiceStatus
+      tags: [voice]
+      responses:
+        "200":
+          description: Voice availability
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VoiceStatus"
+  /voice/prompts:
+    get:
+      operationId: listVoicePrompts
+      tags: [voice]
+      responses:
+        "200":
+          description: All voice prompts (same text is always shown on screen)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VoicePrompt"
+
+  /stats/summary:
+    get:
+      operationId: getStatsSummary
+      tags: [stats]
+      summary: Outcome counts across live checks
+      responses:
+        "200":
+          description: Summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatsSummary"
+
 components:
   schemas:
     HealthStatus:
@@ -33,4 +318,332 @@ components:
           type: string
       required:
         - status
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
 
+    SourceLink:
+      type: object
+      required: [label, url]
+      properties:
+        label: { type: string }
+        url: { type: string }
+    ExpectedCode:
+      type: object
+      required: [code, codeType, description, isSample]
+      properties:
+        code: { type: string }
+        codeType: { $ref: "#/components/schemas/CodeType" }
+        description: { type: string }
+        isSample:
+          type: boolean
+          description: True when this is a clearly labeled sample code, not a documented one
+    CodeType:
+      type: string
+      enum: [style_code, model_number, rn_number, ca_number, date_code, unknown]
+    ReferencePhoto:
+      type: object
+      required: [imageUrl, caption, source, isDemo]
+      properties:
+        imageUrl:
+          type: string
+          description: Path relative to the web app base URL (e.g. "references/beta-lt/logo.png")
+        caption: { type: string }
+        source: { type: string }
+        isDemo: { type: boolean }
+    StepId:
+      type: string
+      enum: [logo, wash_tag_front, wash_tag_back, zipper, seam_tape]
+    InspectionStep:
+      type: object
+      required: [id, title, instruction, voicePromptId, framingTips, required, comparisonFocus, references]
+      properties:
+        id: { $ref: "#/components/schemas/StepId" }
+        title: { type: string }
+        instruction: { type: string }
+        voicePromptId: { type: string }
+        framingTips:
+          type: array
+          items: { type: string }
+        required: { type: boolean }
+        comparisonFocus:
+          type: array
+          items: { type: string }
+          description: Visible details compared at this step (e.g. lettering, spacing, apostrophe)
+        references:
+          type: array
+          items: { $ref: "#/components/schemas/ReferencePhoto" }
+    WashTagPolicy:
+      type: object
+      required: [expected, requireBothSides]
+      properties:
+        expected: { type: boolean }
+        requireBothSides: { type: boolean }
+    ProductProfile:
+      type: object
+      required: [id, brand, model, generation, colorway, category, referenceStatus, referenceNote, sources, expectedCodes, washTag, steps]
+      properties:
+        id: { type: string }
+        brand: { type: string }
+        model: { type: string }
+        generation: { type: string }
+        colorway: { type: ["string", "null"] }
+        category: { type: string }
+        referenceStatus:
+          type: string
+          enum: [documented, demo]
+        referenceNote: { type: string }
+        sources:
+          type: array
+          items: { $ref: "#/components/schemas/SourceLink" }
+        expectedCodes:
+          type: array
+          items: { $ref: "#/components/schemas/ExpectedCode" }
+        washTag: { $ref: "#/components/schemas/WashTagPolicy" }
+        steps:
+          type: array
+          items: { $ref: "#/components/schemas/InspectionStep" }
+
+    ItemCondition:
+      type: string
+      enum: [new_with_tags, like_new, good, fair]
+    CheckMode:
+      type: string
+      enum: [live, demo]
+    CheckStatus:
+      type: string
+      enum: [in_progress, passed, retake_requested, manual_review]
+    CheckInput:
+      type: object
+      required: [profileId, condition, askingPrice]
+      properties:
+        profileId: { type: string }
+        condition: { $ref: "#/components/schemas/ItemCondition" }
+        askingPrice: { type: number, minimum: 0 }
+        currency: { type: string, default: USD }
+    PhotoUpload:
+      type: object
+      required: [stepId, imageDataUrl]
+      properties:
+        stepId: { $ref: "#/components/schemas/StepId" }
+        imageDataUrl:
+          type: string
+          description: "data:image/jpeg;base64,... (client should downscale to ~1600px). Not stored."
+    WashTagAnswer:
+      type: object
+      required: [present]
+      properties:
+        present: { type: boolean }
+
+    PhotoQualityIssue:
+      type: string
+      enum: [blurry, cropped, bad_angle, too_dark, glare, wrong_subject, too_far]
+    PhotoQuality:
+      type: object
+      required: [usable, issues, note]
+      properties:
+        usable: { type: boolean }
+        issues:
+          type: array
+          items: { $ref: "#/components/schemas/PhotoQualityIssue" }
+        note: { type: string }
+    ObservedCode:
+      type: object
+      required: [value, codeType, purposeIdentified, confidence]
+      properties:
+        value: { type: string }
+        codeType: { $ref: "#/components/schemas/CodeType" }
+        purposeIdentified:
+          type: boolean
+          description: True only when the label/context on the tag identifies what the code is
+        confidence:
+          type: string
+          enum: [high, medium, low]
+    VisibleDifference:
+      type: object
+      required: [feature, description, severity]
+      properties:
+        feature: { type: string }
+        description: { type: string }
+        severity:
+          type: string
+          enum: [minor, meaningful]
+    PhotoObservation:
+      type: object
+      required: [quality, extractedText, codes, visibleDetails, differences, comparisonReliable, uncertaintyNote, summary]
+      properties:
+        quality: { $ref: "#/components/schemas/PhotoQuality" }
+        extractedText:
+          type: string
+          description: Raw text read from the photo, verbatim
+        codes:
+          type: array
+          items: { $ref: "#/components/schemas/ObservedCode" }
+        visibleDetails:
+          type: array
+          items: { type: string }
+        differences:
+          type: array
+          items: { $ref: "#/components/schemas/VisibleDifference" }
+        comparisonReliable: { type: boolean }
+        uncertaintyNote: { type: ["string", "null"] }
+        summary: { type: string }
+    CheckPhoto:
+      type: object
+      required: [id, stepId, imageUrl, observation, createdAt]
+      properties:
+        id: { type: string }
+        stepId: { $ref: "#/components/schemas/StepId" }
+        imageUrl:
+          type: ["string", "null"]
+          description: Set for demo photos (path relative to web base URL). Null for live uploads — photos are not stored; the client keeps its own preview.
+        observation: { $ref: "#/components/schemas/PhotoObservation" }
+        createdAt: { type: string, format: date-time }
+
+    DecisionReason:
+      type: object
+      required: [code, stepId, message]
+      properties:
+        code:
+          type: string
+          enum: [missing_photo, unusable_photo, code_mismatch, code_type_uncertain, code_not_found, tag_absent, construction_difference, reference_insufficient, comparison_unreliable]
+        stepId:
+          oneOf:
+            - $ref: "#/components/schemas/StepId"
+            - type: "null"
+        message: { type: string }
+    RetakeRequest:
+      type: object
+      required: [stepId, issue, message, voicePromptId]
+      properties:
+        stepId: { $ref: "#/components/schemas/StepId" }
+        issue: { type: string }
+        message: { type: string }
+        voicePromptId: { type: string }
+    WashTagComparison:
+      type: object
+      required: [observedCode, expectedCodes, rawText, result]
+      properties:
+        observedCode: { type: ["string", "null"] }
+        expectedCodes:
+          type: array
+          items: { type: string }
+        rawText: { type: ["string", "null"] }
+        result:
+          type: string
+          enum: [match, mismatch, uncertain, not_compared, tag_absent]
+    StepSummary:
+      type: object
+      required: [stepId, status, note]
+      properties:
+        stepId: { $ref: "#/components/schemas/StepId" }
+        status:
+          type: string
+          enum: [ok, retake, review, missing, skipped]
+        note: { type: string }
+    CheckDecision:
+      type: object
+      required: [outcome, headline, reasons, retakes, washTag, steps, decidedAt, disclaimer]
+      properties:
+        outcome:
+          type: string
+          enum: [passed, retake_requested, manual_review]
+        headline: { type: string }
+        reasons:
+          type: array
+          items: { $ref: "#/components/schemas/DecisionReason" }
+        retakes:
+          type: array
+          items: { $ref: "#/components/schemas/RetakeRequest" }
+        washTag:
+          oneOf:
+            - $ref: "#/components/schemas/WashTagComparison"
+            - type: "null"
+        steps:
+          type: array
+          items: { $ref: "#/components/schemas/StepSummary" }
+        decidedAt: { type: string, format: date-time }
+        disclaimer: { type: string }
+    Check:
+      type: object
+      required: [id, mode, demoCaseId, profileId, condition, askingPrice, currency, washTagPresent, status, decision, photos, publishedAt, listingId, createdAt]
+      properties:
+        id: { type: string }
+        mode: { $ref: "#/components/schemas/CheckMode" }
+        demoCaseId: { type: ["string", "null"] }
+        profileId: { type: string }
+        condition: { $ref: "#/components/schemas/ItemCondition" }
+        askingPrice: { type: number }
+        currency: { type: string }
+        washTagPresent: { type: ["boolean", "null"] }
+        status: { $ref: "#/components/schemas/CheckStatus" }
+        decision:
+          oneOf:
+            - $ref: "#/components/schemas/CheckDecision"
+            - type: "null"
+        photos:
+          type: array
+          items: { $ref: "#/components/schemas/CheckPhoto" }
+        publishedAt: { type: ["string", "null"], format: date-time }
+        listingId: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+    CheckSummary:
+      type: object
+      required: [id, profileId, profileName, status, askingPrice, currency, createdAt, publishedAt]
+      properties:
+        id: { type: string }
+        profileId: { type: string }
+        profileName: { type: string }
+        status: { $ref: "#/components/schemas/CheckStatus" }
+        askingPrice: { type: number }
+        currency: { type: string }
+        createdAt: { type: string, format: date-time }
+        publishedAt: { type: ["string", "null"], format: date-time }
+    PublishResult:
+      type: object
+      required: [checkId, listingId, publishedAt, mode, message]
+      properties:
+        checkId: { type: string }
+        listingId: { type: string }
+        publishedAt: { type: string, format: date-time }
+        mode: { $ref: "#/components/schemas/CheckMode" }
+        message: { type: string }
+
+    DemoCase:
+      type: object
+      required: [id, title, description, expectedOutcome, profileId]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        description: { type: string }
+        expectedOutcome:
+          type: string
+          enum: [passed, retake_requested, manual_review]
+        profileId: { type: string }
+
+    VoiceStatus:
+      type: object
+      required: [available, provider]
+      properties:
+        available: { type: boolean }
+        provider: { type: string }
+    VoicePrompt:
+      type: object
+      required: [id, text]
+      properties:
+        id: { type: string }
+        text: { type: string }
+
+    StatsSummary:
+      type: object
+      required: [total, passed, retakeRequested, manualReview, inProgress, published, visionConfigured]
+      properties:
+        total: { type: integer }
+        passed: { type: integer }
+        retakeRequested: { type: integer }
+        manualReview: { type: integer }
+        inProgress: { type: integer }
+        published: { type: integer }
+        visionConfigured: { type: boolean }

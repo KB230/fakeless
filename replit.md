@@ -1,45 +1,40 @@
-# [Project name]
+# Listing Check
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Mobile-first counterfeit screening step for clothing resellers: before publishing a listing, the seller photographs logo, wash tag, zipper and seam tape; a vision model returns structured observations and backend rules decide Passed listing checks / Retake requested / Manual review.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
-
-## Stack
-
-- pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- Workflows: `artifacts/api-server: API Server` (Express, /api) and `artifacts/listing-check: web` (React/Vite, /)
+- `pnpm run typecheck` — full typecheck
+- `pnpm --filter @workspace/api-spec run codegen` — regenerate hooks + Zod from OpenAPI
+- `pnpm --filter @workspace/db run push` — push DB schema (dev only)
+- Secrets: `OPENAI_API_KEY` (live photo analysis; user's own key), `ELEVENLABS_API_KEY` (voice prompts). Optional env: `OPENAI_VISION_MODEL` (default gpt-5), `ELEVENLABS_VOICE_ID`, `ELEVENLABS_MODEL_ID`.
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- API contract: `lib/api-spec/openapi.yaml`
+- DB schema: `lib/db/src/schema/checks.ts` (checks, check_photos)
+- Product profiles (add new clothing models here): `artifacts/api-server/src/config/profiles/`
+- Reference/demo images: `artifacts/listing-check/public/references/<model>/`, `public/demo/`
+- Decision rules: `artifacts/api-server/src/lib/rules.ts`; vision prompt/schema: `lib/vision.ts`; TTS: `lib/voice.ts`
+- Demo cases (pre-recorded observations): `artifacts/api-server/src/config/demoCases.ts`
+- Voice prompt whitelist (same text shown on screen): `artifacts/api-server/src/config/voicePrompts.ts`
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Vision model only observes; outcome is decided by backend rules (retake > manual review > pass).
+- Publishing gate is server-side: `/checks/:id/publish` 409s unless status and recorded decision are "passed"; any new evidence resets the decision.
+- Checks carry `mode` live|demo; demo checks never count in live stats/lists and their publish is labeled mock demo.
+- Live checks against a profile with `referenceStatus: "demo"` always go to manual review (reference insufficient) and are never compared to sample codes.
+- Live photo bytes are not stored; only observations. The client keeps its own previews.
+- TTS only synthesizes whitelisted prompt ids (no arbitrary text), cached in memory.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
-
-## User preferences
-
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Home with EUIPO 2022 statistic, "Start a listing check" and "Try a demo"
+- Seller flow: profile + condition + price → logo → wash tag question/front/back → zipper → seam tape → result
+- Demo: three no-upload cases (pass+mock publish, blurry tag retake, style-code mismatch review)
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
-
-## Pointers
-
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- Beta LT profile uses demo reference images and sample code `LC-SAMPLE-29090`; replace with documented references and set `referenceStatus: "documented"` to allow live passes.
