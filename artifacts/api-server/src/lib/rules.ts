@@ -14,6 +14,7 @@ import type {
 } from "@workspace/api-zod";
 import { retakeMessage, retakeVoicePromptId, type RetakeKind } from "../config/voicePrompts";
 import { AF1_STYLE_CODE_PATTERN } from "../config/profiles/nike-af1-07-white";
+import { TNF_STYLE_CODE_PATTERN } from "../config/profiles/tnf-backpack";
 
 /**
  * Documented style-code formats per model profile. A code that matches the
@@ -22,6 +23,7 @@ import { AF1_STYLE_CODE_PATTERN } from "../config/profiles/nike-af1-07-white";
  */
 const STYLE_CODE_PATTERNS: Record<string, RegExp> = {
   "nike-af1-07-white": AF1_STYLE_CODE_PATTERN,
+  "tnf-backpack": TNF_STYLE_CODE_PATTERN,
 };
 
 function withDocumentedCodeTypes(profile: ProductProfile, obs: PhotoObservation): PhotoObservation {
@@ -402,6 +404,7 @@ function applyWarningSigns(input: RulesInput, reasons: DecisionReason[], steps: 
 const LABEL_CROSS_CHECKS: Record<string, { a: string; b: string; label: string }[]> = {
   "category-sneakers": [{ a: "box_label", b: "size_tag", label: "box label and size tag" }],
   "nike-af1-07-white": [{ a: "box_label", b: "size_tag", label: "box label and size tag" }],
+  "tnf-backpack": [{ a: "hang_tag", b: "interior_tag", label: "hang tag and inside label" }],
 };
 
 const US_SIZE = /\bUS\s*(?:M(?:EN'?S)?\s*)?(\d{1,2}(?:\.5)?)\b/i;

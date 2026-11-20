@@ -2,6 +2,7 @@ import type { Category, ProductProfile, ScreeningTier, TierResolution } from "@w
 import { arcteryxBetaLt } from "./arcteryx-beta-lt";
 import { nikeAf1White } from "./nike-af1-07-white";
 import { tnfNuptse } from "./tnf-nuptse";
+import { tnfBackpack } from "./tnf-backpack";
 import {
   basicScreening,
   handbagsChecklist,
@@ -23,6 +24,7 @@ export const PROFILES: ProductProfile[] = [
   arcteryxBetaLt,
   nikeAf1White,
   tnfNuptse,
+  tnfBackpack,
   sneakersChecklist,
   streetwearChecklist,
   outerwearChecklist,
@@ -35,7 +37,7 @@ const CATEGORY_DEFS: Array<Omit<Category, "modelProfileIds">> = [
   { id: "sneakers", name: "Sneakers", examples: "Trainers, basketball and running shoes", checklistProfileId: sneakersChecklist.id, supported: true },
   { id: "streetwear", name: "Streetwear", examples: "Hoodies, tees, sweatshirts", checklistProfileId: streetwearChecklist.id, supported: true },
   { id: "outerwear", name: "Outerwear", examples: "Shell jackets, puffers, coats", checklistProfileId: outerwearChecklist.id, supported: true },
-  { id: "handbags", name: "Handbags and leather goods", examples: "Bags, wallets, belts", checklistProfileId: handbagsChecklist.id, supported: true },
+  { id: "handbags", name: "Handbags and leather goods", examples: "Bags, backpacks, wallets, belts", checklistProfileId: handbagsChecklist.id, supported: true },
   { id: "hats", name: "Hats and caps", examples: "Baseball caps, fitted caps, beanies", checklistProfileId: hatsChecklist.id, supported: true },
   { id: "other", name: "Something else", examples: "Anything outside these categories", checklistProfileId: basicScreening.id, supported: false },
 ];
