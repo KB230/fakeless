@@ -6,6 +6,7 @@ import { asset } from "@/lib/helpers";
 
 export const OUTCOME = {
   passed: { label: "Passed listing checks", cls: "ok", Icon: CheckCircle2, short: "Passed" },
+  photo_check_complete: { label: "Photo check complete · Model verification unavailable", cls: "ok", Icon: CheckCircle2, short: "Photo checked" },
   retake_requested: { label: "Retake requested", cls: "retake", Icon: RotateCcw, short: "Retake" },
   manual_review: { label: "Manual review", cls: "review", Icon: UserSearch, short: "Review" },
 } as const;
@@ -21,15 +22,14 @@ export function Shell({ children, back, title }: { children: ReactNode; back?: s
             </Link>
           ) : null}
           <Link href="/" data-testid="link-home" className="flex items-center gap-2">
-            <span className="grid h-7 w-7 place-items-center rounded-md bg-primary font-mono text-[11px] font-bold text-primary-foreground">LC</span>
-            <span className="font-display text-[17px] font-bold">{title ?? "Listing Check"}</span>
+            <span className="font-display text-[32px] font-normal leading-none" aria-label="Fakeless">fakeless.</span>
           </Link>
           <nav className="ml-auto flex gap-1 text-sm">
             <Link href="/demo" data-testid="link-demo" className="rounded-full px-3 py-2 font-medium hover:bg-muted">Demo</Link>
           </nav>
         </div>
       </header>
-      <main className="mx-auto max-w-xl px-4 pb-28 pt-5">{children}</main>
+      <main className="mx-auto max-w-xl px-4 pb-28 pt-5">{title && <p className="mb-4 text-xs text-muted-foreground">{title}</p>}{children}</main>
     </div>
   );
 }
@@ -104,8 +104,8 @@ export function ErrorPanel({ message, onRetry }: { message: string; onRetry?: ()
 }
 
 export const btnPrimary =
-  "inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-base font-semibold text-primary-foreground shadow-[0_6px_0_-1px_hsl(12_70%_34%)] transition-transform active:translate-y-1 active:shadow-none disabled:opacity-40 disabled:active:translate-y-0";
+  "inline-flex h-14 w-full items-center justify-center gap-2 rounded-md bg-primary px-5 text-base font-semibold text-primary-foreground shadow-[0_3px_0_hsl(75_20%_53%)] transition-transform hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none disabled:opacity-40 disabled:active:translate-y-0";
 export const btnInk =
-  "inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-secondary px-5 text-base font-semibold text-secondary-foreground transition-transform active:scale-[.98] disabled:opacity-40";
+  "inline-flex h-14 w-full items-center justify-center gap-2 rounded-md bg-secondary px-5 text-base font-semibold text-secondary-foreground transition-transform hover:bg-accent active:scale-[.98] disabled:opacity-40";
 export const btnGhost =
-  "inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-foreground/15 bg-card px-4 text-sm font-semibold transition-transform active:scale-[.98] disabled:opacity-40";
+  "inline-flex h-12 w-full items-center justify-center gap-2 rounded-md border border-foreground/15 bg-card px-4 text-sm font-semibold transition-transform hover:border-primary/50 hover:bg-accent active:scale-[.98] disabled:opacity-40";

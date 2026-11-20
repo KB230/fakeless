@@ -133,6 +133,15 @@ export default function Result() {
                 <span className={`rounded-full px-2.5 py-0.5 font-mono text-[11px] font-semibold ${STEP_STATUS[s.status]}`}>{s.status}</span>
               </div>
               <p className="mt-1 text-sm text-muted-foreground">{s.note}</p>
+              {c.photos.find(p => p.stepId === s.stepId)?.observation && (() => {
+                const obs = c.photos.find(p => p.stepId === s.stepId)!.observation;
+                return <div className="mt-3 space-y-2 text-sm">
+                  <p>{obs.summary}</p>
+                  {obs.extractedText && <pre className="whitespace-pre-wrap break-words rounded-lg bg-muted p-3 font-mono text-xs">{obs.extractedText}</pre>}
+                  {obs.codes.length > 0 && <ul className="text-xs text-muted-foreground">{obs.codes.map((code, i) => <li key={i}>{code.value} · {code.codeType.replaceAll("_", " ")} · {code.confidence} confidence</li>)}</ul>}
+                  {c.tier !== "model_specific" && <p className="text-xs text-muted-foreground">Observations only. No model reference or code validation.</p>}
+                </div>;
+              })()}
               {s.status !== "skipped" && (
                 <Compare check={c} stepId={s.stepId} photo={c.photos.find((p) => p.stepId === s.stepId)} refs={refsFor(s.stepId)} />
               )}
@@ -178,7 +187,7 @@ function PublishBlock({ check }: { check: Check }) {
   const qc = useQueryClient();
   const publish = usePublishListing();
   const isDemo = check.mode === "demo";
-  const passed = check.decision?.outcome === "passed";
+  const passed = check.decision?.outcome === "passed" || check.decision?.outcome === "photo_check_complete";
   const published = publish.data ?? (check.publishedAt ? { message: `Listing ${check.listingId ?? ""} was published.`, listingId: check.listingId } : null);
 
   if (published)
@@ -186,6 +195,7 @@ function PublishBlock({ check }: { check: Check }) {
       <div className="ok rise mt-6 rounded-2xl p-4" style={{ background: "hsl(var(--o-bg))" }} data-testid="panel-published">
         <p className="font-display text-lg font-bold" style={{ color: "hsl(var(--o))" }}>{isDemo ? "Mock demo publish complete" : "Listing published"}</p>
         <p className="mt-1 text-sm">{published.message}</p>
+        {check.decision?.outcome === "photo_check_complete" && <p className="mt-2 text-xs">Photo checked · model not verified. Not an authentication.</p>}
         {published.listingId && <p className="mt-1 font-mono text-[11px] text-muted-foreground">Listing {published.listingId}</p>}
       </div>
     );
@@ -197,11 +207,11 @@ function PublishBlock({ check }: { check: Check }) {
         onClick={() => publish.mutate({ checkId: check.id }, { onSuccess: () => qc.invalidateQueries({ queryKey: getGetCheckQueryKey(check.id) }) })}
         className={btnPrimary} data-testid="button-publish">
         {publish.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : passed ? <Send className="h-5 w-5" /> : <Lock className="h-5 w-5" />}
-        {isDemo ? "Publish listing (mock demo publish)" : "Publish listing"}
+        {isDemo ? "Publish listing (mock demo publish)" : "Publish listing (mock)"}
       </button>
       {!passed && (
         <p className="mt-2 text-center text-xs text-muted-foreground" data-testid="text-publish-locked">
-          Publishing unlocks only after the listing passes. {check.decision?.outcome === "manual_review" ? "A reviewer will look at this listing." : "Retake the requested photo and run the check again."}
+          Mock publishing unlocks after a pass or completed photo check. {check.decision?.outcome === "manual_review" ? "A person must review this listing before continuing." : "Retake the requested photo and run the check again."}
         </p>
       )}
       {publish.isError && <p className="mt-3 rounded-xl bg-destructive/10 p-3 text-sm text-destructive" data-testid="text-publish-error">{apiError(publish.error).message}</p>}

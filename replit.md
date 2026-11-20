@@ -1,4 +1,4 @@
-# Listing Check
+# Fakeless
 
 Mobile-first counterfeit screening step for clothing resellers: before publishing a listing, the seller photographs logo, wash tag, zipper and seam tape; a vision model returns structured observations and backend rules decide Passed listing checks / Retake requested / Manual review.
 
@@ -25,7 +25,7 @@ Mobile-first counterfeit screening step for clothing resellers: before publishin
 - Vision model only observes; outcome is decided by backend rules (retake > manual review > pass).
 - Publishing gate is server-side: `/checks/:id/publish` 409s unless status and recorded decision are "passed"; any new evidence resets the decision.
 - Checks carry `mode` live|demo; demo checks never count in live stats/lists and their publish is labeled mock demo.
-- Live checks against a profile with `referenceStatus: "demo"` always go to manual review (reference insufficient) and are never compared to sample codes.
+- Live model checks never pass against DEMO references or sample codes. Model requests without a live profile use their category checklist. Category/basic completion is explicitly not model verification.
 - Live photo bytes are not stored; only observations. The client keeps its own previews.
 - TTS only synthesizes whitelisted prompt ids (no arbitrary text), cached in memory.
 
@@ -37,4 +37,4 @@ Mobile-first counterfeit screening step for clothing resellers: before publishin
 
 ## Gotchas
 
-- Beta LT profile uses demo reference images and sample code `LC-SAMPLE-29090`; replace with documented references and set `referenceStatus: "documented"` to allow live passes.
+- Beta LT uses demo reference images and sample code `LC-SAMPLE-29090`; documented references and an enabled live profile are needed for live model verification.

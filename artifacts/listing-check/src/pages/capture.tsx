@@ -14,13 +14,13 @@ import {
   type CheckPhoto,
   type ProductProfile,
   type Check,
+  type PresenceQuestion,
 } from "@workspace/api-client-react";
 import { Shell, Eyebrow, RefPhoto, Skel, ErrorPanel, btnPrimary, btnInk, btnGhost } from "@/components/bits";
 import { VoiceGuide } from "@/components/voice-guide";
 import { apiError, downscaleImage, setPreview, usePreview, STEP_LABEL, CONDITION_LABEL, money } from "@/lib/helpers";
 
-type Stage = { kind: "step"; step: InspectionStep } | { kind: "washq" } | { kind: "review" };
-const isWash = (id: string) => id === "wash_tag_front" || id === "wash_tag_back";
+type Stage = { kind: "step"; step: InspectionStep } | { kind: "question"; question: PresenceQuestion } | { kind: "review" };
 
 export default function Capture() {
   const { id = "" } = useParams<{ id: string }>();
@@ -51,21 +51,22 @@ function Flow({ check, profile }: { check: Check; profile: ProductProfile }) {
 
   const stages: Stage[] = useMemo(() => {
     const out: Stage[] = [];
-    let asked = false;
+    const asked = new Set<string>();
     for (const s of profile.steps) {
-      if (isWash(s.id)) {
-        if (!asked) { out.push({ kind: "washq" }); asked = true; }
-        if (check.washTagPresent === false) continue;
+      if (s.presenceQuestionId) {
+        const q = profile.presenceQuestions.find(q => q.id === s.presenceQuestionId);
+        if (q && !asked.has(q.id)) { out.push({ kind: "question", question: q }); asked.add(q.id); }
+        if (check.presence[s.presenceQuestionId] === false) continue;
       }
       out.push({ kind: "step", step: s });
     }
     out.push({ kind: "review" });
     return out;
-  }, [profile.steps, check.washTagPresent]);
+  }, [profile.steps, profile.presenceQuestions, check.presence]);
 
   const photoFor = (stepId: string) => check.photos.find((p) => p.stepId === stepId);
   const stageDone = (s: Stage) =>
-    s.kind === "washq" ? check.washTagPresent !== null : s.kind === "step" ? !!photoFor(s.step.id) : false;
+    s.kind === "question" ? typeof check.presence[s.question.id] === "boolean" : s.kind === "step" ? !!photoFor(s.step.id) : false;
 
   const [pos, setPos] = useState(0);
   const inited = useRef(false);
@@ -85,6 +86,7 @@ function Flow({ check, profile }: { check: Check; profile: ProductProfile }) {
 
   return (
     <Shell back="/" title={profile.model}>
+      <aside className="mb-5 rounded-xl border border-primary/25 bg-card p-3 text-sm" data-testid="capture-tier-note">{check.tierNote}</aside>
       <div className="mb-5">
         <div className="flex items-center justify-between">
           <Eyebrow>{profile.brand} · {CONDITION_LABEL[check.condition]} · {money(check.askingPrice, check.currency)}</Eyebrow>
@@ -105,8 +107,8 @@ function Flow({ check, profile }: { check: Check; profile: ProductProfile }) {
           <StepView check={check} step={stage.step} photo={photoFor(stage.step.id)} onUploaded={invalidate}
             onNext={() => go(idx + 1)} onBack={idx > 0 ? () => go(idx - 1) : undefined} />
         )}
-        {stage.kind === "washq" && (
-          <WashQuestion check={check} profile={profile} onDone={() => { invalidate(); go(idx + 1); }} onBack={idx > 0 ? () => go(idx - 1) : undefined} />
+        {stage.kind === "question" && (
+          <DetailQuestion check={check} question={stage.question} onDone={(updated) => { qc.setQueryData(getGetCheckQueryKey(check.id), updated); go(idx + 1); }} onBack={idx > 0 ? () => go(idx - 1) : undefined} />
         )}
         {stage.kind === "review" && (
           <ReviewStage check={check} stages={stages} onJump={go} onDone={() => nav(`/check/${check.id}/result`)} />
@@ -125,7 +127,7 @@ function StepView({ check, step, photo, onUploaded, onNext, onBack }: {
   const fileRef = useRef<HTMLInputElement>(null);
   const [localErr, setLocalErr] = useState<string | null>(null);
   const [flash, setFlash] = useState(0);
-  const isTag = isWash(step.id);
+  const isTag = step.readsText;
 
   const onFile = async (f?: File | null) => {
     if (!f) return;
@@ -145,7 +147,7 @@ function StepView({ check, step, photo, onUploaded, onNext, onBack }: {
 
   return (
     <div>
-      <Eyebrow>Step · {STEP_LABEL[step.id] ?? step.id}{step.required ? "" : " · optional"}</Eyebrow>
+      <Eyebrow>Step · {step.title}{step.required ? "" : " · optional"}</Eyebrow>
       <h1 className="font-display mt-1 text-3xl font-extrabold leading-tight">{step.title}</h1>
       <div className="mt-4"><VoiceGuide promptId={step.voicePromptId} fallbackText={step.instruction} /></div>
       {isTag && <p className="mt-2 text-sm font-medium">Include every printed letter and digit on the tag, edge to edge.</p>}
@@ -168,7 +170,7 @@ function StepView({ check, step, photo, onUploaded, onNext, onBack }: {
         )}
         {step.comparisonFocus.length > 0 && (
           <div className="rounded-xl border border-foreground/10 bg-card p-3">
-            <Eyebrow>We compare</Eyebrow>
+            <Eyebrow>Visible details</Eyebrow>
             <div className="mt-1.5 flex flex-wrap gap-1.5">{step.comparisonFocus.map((t, i) => <span key={i} className="rounded-md bg-muted px-2 py-1 font-mono text-[11px]">{t}</span>)}</div>
           </div>
         )}
@@ -192,7 +194,7 @@ function StepView({ check, step, photo, onUploaded, onNext, onBack }: {
             <div className="absolute inset-0 bg-secondary/40">
               <div className="scan absolute inset-x-0 h-1/4 bg-gradient-to-b from-transparent via-primary/50 to-transparent" />
               <div className="absolute inset-x-0 bottom-0 flex items-center gap-2 bg-secondary/85 px-3 py-2 font-mono text-xs text-secondary-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" /> Comparing against reference
+                <Loader2 className="h-4 w-4 animate-spin" /> {check.tier === "model_specific" ? "Comparing against reference" : "Reading visible evidence"}
               </div>
             </div>
           )}
@@ -227,8 +229,8 @@ function StepView({ check, step, photo, onUploaded, onNext, onBack }: {
 
       <div className="mt-6 flex gap-2">
         {onBack && <button onClick={onBack} className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-foreground/15 bg-card" aria-label="Previous step" data-testid="button-prev"><ArrowLeft className="h-5 w-5" /></button>}
-        <button onClick={onNext} disabled={!photo || upload.isPending} className={usable ? btnPrimary : btnInk} data-testid="button-next">
-          {photo && !usable ? "Continue without retaking" : "Next"} <ArrowRight className="h-5 w-5" />
+        <button onClick={onNext} disabled={(!photo && step.required) || upload.isPending} className={usable ? btnPrimary : btnInk} data-testid="button-next">
+          {!photo && !step.required ? "Skip optional photo" : photo && !usable ? "Continue without retaking" : "Next"} <ArrowRight className="h-5 w-5" />
         </button>
       </div>
     </div>
@@ -276,23 +278,21 @@ function Observation({ obs, isTag }: { obs: CheckPhoto["observation"]; isTag: bo
   );
 }
 
-function WashQuestion({ check, profile, onDone, onBack }: { check: Check; profile: ProductProfile; onDone: () => void; onBack?: () => void }) {
+function DetailQuestion({ check, question, onDone, onBack }: { check: Check; question: PresenceQuestion; onDone: (updated: Check) => void; onBack?: () => void }) {
   const set = useSetDetailPresence();
-  const answer = (present: boolean) => set.mutate({ checkId: check.id, data: { questionId: "wash_tag", present } }, { onSuccess: onDone });
+  const answer = (present: boolean) => set.mutate({ checkId: check.id, data: { questionId: question.id, present } }, { onSuccess: onDone });
   return (
     <div>
       <Eyebrow>Question</Eyebrow>
-      <h1 className="font-display mt-1 text-3xl font-extrabold leading-tight">Does the item have an inside wash or care tag?</h1>
-      <p className="mt-3 text-sm text-muted-foreground">Usually sewn into the inside left side seam. If yes, you will photograph the front and the back of it.</p>
+      <h1 className="font-display mt-1 text-3xl font-extrabold leading-tight">{question.question}</h1>
+      <p className="mt-3 text-sm text-muted-foreground">{question.help}</p>
       <p className="mt-3 rounded-xl border border-foreground/10 bg-card p-3 text-sm" data-testid="text-no-tag-consequence">
-        {profile.washTag.expected
-          ? "This model normally has one. If you answer No, the listing will go to manual review."
-          : "This model does not always have one. Answering No skips the tag photos."}
+        {question.absentNote}
       </p>
       <div className="mt-6 grid grid-cols-2 gap-2">
         {[true, false].map((v) => (
-          <button key={String(v)} onClick={() => answer(v)} disabled={set.isPending} data-testid={`button-washtag-${v ? "yes" : "no"}`}
-            className={`h-20 rounded-2xl border-2 font-display text-2xl font-bold transition-transform active:scale-95 disabled:opacity-50 ${check.washTagPresent === v ? "border-secondary bg-secondary text-secondary-foreground" : "border-foreground/10 bg-card"}`}>
+          <button key={String(v)} onClick={() => answer(v)} disabled={set.isPending} data-testid={`button-presence-${question.id}-${v ? "yes" : "no"}`}
+            className={`h-20 rounded-2xl border-2 font-display text-2xl font-bold transition-transform active:scale-95 disabled:opacity-50 ${check.presence[question.id] === v ? "border-primary bg-primary/10" : "border-foreground/10 bg-card"}`}>
             {set.isPending && set.variables?.data.present === v ? <Loader2 className="mx-auto h-6 w-6 animate-spin" /> : v ? "Yes" : "No"}
           </button>
         ))}
@@ -307,7 +307,7 @@ function ReviewStage({ check, stages, onJump, onDone }: { check: Check; stages: 
   const qc = useQueryClient();
   const evaluate = useEvaluateCheck();
   const missing = stages.filter((s) => s.kind === "step" && s.step.required && !check.photos.some((p) => p.stepId === s.step.id));
-  const unanswered = stages.some((s) => s.kind === "washq") && check.washTagPresent === null;
+  const unanswered = stages.some((s) => s.kind === "question" && typeof check.presence[s.question.id] !== "boolean");
   const run = () =>
     evaluate.mutate({ checkId: check.id }, {
       onSuccess: (c) => { qc.setQueryData(getGetCheckQueryKey(check.id), c); onDone(); },
@@ -319,15 +319,15 @@ function ReviewStage({ check, stages, onJump, onDone }: { check: Check; stages: 
       <div className="mt-5 divide-y divide-foreground/10 overflow-hidden rounded-2xl border border-foreground/10 bg-card">
         {stages.map((s, i) => {
           if (s.kind === "review") return null;
-          const label = s.kind === "washq" ? "Wash tag present?" : s.step.title;
-          const done = s.kind === "washq" ? check.washTagPresent !== null : check.photos.some((p) => p.stepId === s.step.id);
+          const label = s.kind === "question" ? s.question.question : s.step.title;
+          const done = s.kind === "question" ? typeof check.presence[s.question.id] === "boolean" : check.photos.some((p) => p.stepId === s.step.id);
           const photo = s.kind === "step" ? check.photos.find((p) => p.stepId === s.step.id) : undefined;
           return (
             <button key={i} onClick={() => onJump(i)} className="flex w-full items-center gap-3 p-4 text-left active:bg-muted" data-testid={`row-review-${i}`}>
               <span className={`grid h-7 w-7 place-items-center rounded-full ${done ? "bg-secondary text-secondary-foreground" : "border-2 border-dashed border-foreground/25"}`}>{done && <CheckCircle2 className="h-4 w-4" />}</span>
               <span className="flex-1 font-medium">{label}</span>
               <span className="font-mono text-[11px] text-muted-foreground">
-                {s.kind === "washq" ? (check.washTagPresent === null ? "unanswered" : check.washTagPresent ? "yes" : "no") : photo ? (photo.observation.quality.usable ? "usable" : "issues") : "missing"}
+                {s.kind === "question" ? (typeof check.presence[s.question.id] !== "boolean" ? "unanswered" : check.presence[s.question.id] ? "yes" : "no") : photo ? (photo.observation.quality.usable ? "usable" : "issues") : s.step.required ? "missing" : "optional"}
               </span>
             </button>
           );

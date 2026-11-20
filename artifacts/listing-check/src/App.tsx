@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
@@ -25,6 +25,7 @@ function Router() {
     <RoutedErrorBoundary>
       <Switch>
         <Route path="/" component={Home} />
+        <Route path="/fakeless-aura" component={Home} />
         <Route path="/check/new" component={Setup} />
         <Route path="/check/:id/result" component={Result} />
         <Route path="/check/:id" component={Capture} />
@@ -37,6 +38,12 @@ function Router() {
 
 function RoutedErrorBoundary({ children }: { children: ReactNode }) {
   const [location] = useLocation();
+  useEffect(() => {
+    const page = location === "/" || location === "/fakeless-aura" ? "Counterfeit screening before you list" : location === "/demo" ? "Sample checks" : location === "/check/new" ? "Start a check" : location.endsWith("/result") ? "Check results" : "Photo capture";
+    document.title = `Fakeless — ${page}`;
+    document.querySelector('meta[property="og:title"]')?.setAttribute("content", document.title);
+    document.querySelector('meta[name="twitter:title"]')?.setAttribute("content", document.title);
+  }, [location]);
   return <ErrorBoundary resetKey={location}>{children}</ErrorBoundary>;
 }
 

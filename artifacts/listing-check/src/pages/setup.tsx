@@ -5,6 +5,9 @@ import {
   useListProfiles,
   getListProfilesQueryKey,
   useCreateCheck,
+  useListCategories,
+  useResolveScreeningTier,
+  getResolveScreeningTierQueryKey,
   type ItemCondition,
 } from "@workspace/api-client-react";
 import { Shell, Eyebrow, Skel, ErrorPanel, btnPrimary } from "@/components/bits";
@@ -15,15 +18,19 @@ export default function Setup() {
   const profiles = useListProfiles({ query: { queryKey: getListProfilesQueryKey() } });
   const create = useCreateCheck();
   const [profileId, setProfileId] = useState<string | null>(null);
+  const [categoryId, setCategoryId] = useState("");
+  const categories = useListCategories();
+  const tierParams = { categoryId, ...(profileId ? { profileId } : {}) };
+  const tier = useResolveScreeningTier(tierParams, { query: { enabled: !!categoryId, queryKey: getResolveScreeningTierQueryKey(tierParams) } });
   const [condition, setCondition] = useState<ItemCondition | null>(null);
   const [price, setPrice] = useState("");
   const priceNum = Number(price);
-  const valid = !!profileId && !!condition && price !== "" && priceNum >= 0 && Number.isFinite(priceNum);
+  const valid = !!categoryId && !!tier.data && !tier.isFetching && !!condition && price !== "" && priceNum >= 0 && Number.isFinite(priceNum);
 
   const submit = () => {
     if (!valid) return;
     create.mutate(
-      { data: { profileId: profileId!, condition: condition!, askingPrice: priceNum, currency: "USD" } },
+      { data: { categoryId, profileId, condition: condition!, askingPrice: priceNum, currency: "USD" } },
       { onSuccess: (c) => nav(`/check/${c.id}`) },
     );
   };
@@ -33,16 +40,26 @@ export default function Setup() {
       <Eyebrow>New check · Setup</Eyebrow>
       <h1 className="font-display mt-2 text-3xl font-extrabold">What are you listing?</h1>
 
-      <h2 className="mt-6 font-mono text-xs font-semibold uppercase tracking-wider">1 · Product profile</h2>
+      <h2 className="mt-6 font-mono text-xs font-semibold uppercase tracking-wider">1 · Category</h2>
+      <p className="mt-2 text-sm text-muted-foreground">Use your own clothes. Pick a category to see the available screening tier before taking photos.</p>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        {categories.isLoading ? <Skel className="h-20" /> : categories.isError ? <ErrorPanel message={apiError(categories.error).message} onRetry={() => categories.refetch()} /> : categories.data?.map(c => (
+          <button key={c.id} onClick={() => { setCategoryId(c.id); setProfileId(null); }} data-testid={`button-category-${c.id}`} aria-pressed={categoryId === c.id}
+            className={`min-h-24 rounded-xl border p-3 text-left ${categoryId === c.id ? "border-primary bg-primary/10" : "border-foreground/15 bg-card"}`}>
+            <strong className="block text-sm">{c.name}</strong><span className="mt-1 block text-xs text-muted-foreground">{c.examples}</span>
+          </button>
+        ))}
+      </div>
+      {categoryId && <button onClick={() => setProfileId(null)} aria-pressed={!profileId} className="mt-4 min-h-11 text-sm underline">Use the category checklist / no exact model</button>}
       <div className="mt-2 space-y-2">
-        {profiles.isLoading ? (
+        {!categoryId ? null : profiles.isLoading ? (
           <><Skel className="h-24" /><Skel className="h-24" /></>
         ) : profiles.isError ? (
           <ErrorPanel message={apiError(profiles.error).message} onRetry={() => profiles.refetch()} />
         ) : !profiles.data?.length ? (
           <p className="rounded-xl bg-muted p-4 text-sm text-muted-foreground">No product profiles are available yet.</p>
         ) : (
-          profiles.data.map((p) => {
+          profiles.data.filter(p => p.kind === "model" && p.categoryId === categoryId).map((p) => {
             const on = p.id === profileId;
             return (
               <button key={p.id} onClick={() => setProfileId(p.id)} data-testid={`button-profile-${p.id}`}
@@ -70,6 +87,12 @@ export default function Setup() {
           })
         )}
       </div>
+      {categoryId && <div className="mt-4 rounded-xl border border-primary/30 bg-card p-4" data-testid="panel-screening-tier">
+        {tier.isLoading || tier.isFetching ? <p>Finding your screening tier…</p> : tier.isError ? <ErrorPanel message={apiError(tier.error).message} onRetry={() => tier.refetch()} /> : tier.data && <>
+          <h2 className="font-display text-2xl">{tier.data.title}</h2><p className="mt-2 text-sm text-muted-foreground">{tier.data.note}</p>
+          <p className="mt-2 text-xs text-muted-foreground">This is photo screening, not authentication. Photo analysis needs a configured server-side OpenAI key.</p>
+        </>}
+      </div>}
 
       <h2 className="mt-7 font-mono text-xs font-semibold uppercase tracking-wider">2 · Condition</h2>
       <div className="mt-2 grid grid-cols-2 gap-2">

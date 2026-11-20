@@ -12,7 +12,7 @@ export default function Demo() {
   return (
     <Shell back="/">
       <div className="mb-4 inline-flex rounded bg-primary px-2 py-0.5 font-mono text-[11px] font-bold text-primary-foreground">DEMO</div>
-      <h1 className="font-display text-3xl font-extrabold">Three sample jackets</h1>
+      <h1 className="font-display text-3xl font-extrabold">Five sample checks</h1>
       <p className="mt-2 text-[15px] text-muted-foreground">
         Sample photos and sample codes, run through the same decision rules as a live check. No camera, no uploads.
       </p>

@@ -1,144 +1,98 @@
+import { useState, type CSSProperties } from "react";
 import { Link } from "wouter";
-import { ArrowRight, ExternalLink, PlayCircle, Info } from "lucide-react";
-import {
-  useGetStatsSummary,
-  getGetStatsSummaryQueryKey,
-  useListChecks,
-  getListChecksQueryKey,
-} from "@workspace/api-client-react";
-import { format } from "date-fns";
-import { Shell, Eyebrow, OutcomeChip, Skel, ErrorPanel, btnPrimary, btnGhost } from "@/components/bits";
-import { money, apiError } from "@/lib/helpers";
+import { ArrowUpRight, ArrowDown, Plus, Minus, ScanLine, Play } from "lucide-react";
+import { useGetStatsSummary, getGetStatsSummaryQueryKey, useListChecks, getListChecksQueryKey } from "@workspace/api-client-react";
+import { OutcomeChip } from "@/components/bits";
 import { MarketplaceNetwork } from "@/components/marketplace-network";
+import { apiError, asset, money } from "@/lib/helpers";
+import "./home-aura.css";
 
-const EUIPO =
-  "https://euipo.europa.eu/tunnel-web/secure/webdav/guest/document_library/observatory/documents/reports/IP_youth_scoreboard_study_2022/executiveSummary/executive_summary_2022_en.pdf";
+const EUIPO = "https://euipo.europa.eu/tunnel-web/secure/webdav/guest/document_library/observatory/documents/reports/IP_youth_scoreboard_study_2022/executiveSummary/executive_summary_2022_en.pdf";
+const OECD = "https://www.oecd.org/en/publications/mapping-global-trade-in-fakes-2025_94d3b29f-en.html";
+const categories = [
+  ["Sneakers", "Record both shoes, box label when present, inside size tag, insole, outsole and stitching. Codes are transcribed, not validated against invented formats."],
+  ["Streetwear", "Capture the full front, neck label, both sides of the care tag, graphic and hem stitching. A missing expected care tag requires manual review."],
+  ["Outerwear", "Capture the full jacket, logo, both sides of the care tag, zipper and inside seams. Model comparison requires documented references."],
+  ["Handbags and leather goods", "Record the full front, brand stamp, interior code area when present, hardware and stitching. Appearance alone cannot establish authenticity."],
+  ["Hats and caps", "Photograph the front logo, inside brand and size tags, underbrim, sweatband and closure. The check records visible evidence, not proof of origin."],
+];
 
 export default function Home() {
   const stats = useGetStatsSummary({ query: { queryKey: getGetStatsSummaryQueryKey() } });
   const params = { limit: 5 };
   const checks = useListChecks(params, { query: { queryKey: getListChecksQueryKey(params) } });
+  const [openCategory, setOpenCategory] = useState<number | null>(2);
   const s = stats.data;
-
   return (
-    <Shell>
-      <section className="rise">
-        <Eyebrow>Step 4 of 5 · Before you publish</Eyebrow>
-        <h1 className="font-display mt-3 text-[40px] font-extrabold leading-[0.98] sm:text-5xl" data-testid="text-headline">
-          Catch counterfeit warning signs before you list.
-        </h1>
-        <p className="mt-4 text-[15px] text-muted-foreground">
-          An estimated $467 billion in counterfeit goods crossed borders worldwide in 2021. Online marketplaces are one route to buyers. Fakeless helps marketplaces flag warning signs before an item gets listed.
-        </p>
-        <a
-          href="https://www.oecd.org/en/publications/mapping-global-trade-in-fakes-2025_94d3b29f-en.html"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-2 inline-flex items-center gap-1.5 text-xs text-muted-foreground underline underline-offset-4"
-          data-testid="link-source-counterfeit-trade"
-        >
-          Source: OECD–EUIPO, Mapping Global Trade in Fakes 2025 (2021 estimate)
-          <ExternalLink className="h-3 w-3 shrink-0" />
-        </a>
-      </section>
-
-      <section className="rise mt-6 overflow-hidden rounded-3xl bg-secondary text-secondary-foreground" style={{ animationDelay: ".08s" }}>
-        <div className="p-5">
-          <div className="flex items-end gap-2">
-            <span className="font-display text-[84px] font-extrabold leading-[0.8] text-primary">52%</span>
-            <span className="pb-1 font-mono text-[11px] uppercase tracking-widest opacity-70">EUIPO · 2022</span>
+    <main className="aura" id="aura-top" style={{ "--aura-textile": `url("${asset("images/fakeless-aura-textile.jpg")}")` } as CSSProperties}>
+      <div className="aura-wrap">
+        <nav className="aura-nav" aria-label="Main navigation">
+          <Link className="aura-wordmark" href="/" aria-label="Fakeless home">fakeless<span>.</span></Link>
+          <div className="aura-navlinks">
+            <a href="#aura-checks">What we check</a><a href="#aura-method">The approach</a>
+            <Link href="/check/new" className="aura-navcheck">Start a check <ArrowUpRight size={16} /></Link>
           </div>
-          <p className="mt-4 text-[15px] leading-snug" data-testid="text-statistic">
-            In a 2022 EUIPO survey, 52% of young EU respondents said they had bought at least one counterfeit product online in the previous 12 months.
-          </p>
-          <a href={EUIPO} target="_blank" rel="noopener noreferrer" data-testid="link-source-euipo"
-            className="mt-3 inline-flex items-center gap-1.5 font-mono text-xs underline underline-offset-4 opacity-80 hover:opacity-100">
-            Source: EUIPO 2022 IP and Youth Scoreboard <ExternalLink className="h-3 w-3" />
-          </a>
-        </div>
-      </section>
-
-      <section className="rise mt-6 space-y-3" style={{ animationDelay: ".14s" }}>
-        <Link href="/check/new" data-testid="link-start-check" className={btnPrimary}>
-          Start a listing check <ArrowRight className="h-5 w-5" />
-        </Link>
-        <Link href="/demo" data-testid="link-try-demo" className={btnGhost + " h-14 text-base"}>
-          <PlayCircle className="h-5 w-5" /> Try a demo
-        </Link>
-        {s && !s.visionConfigured && (
-          <p className="flex items-start gap-2 rounded-xl bg-muted px-3 py-2.5 text-xs text-muted-foreground" data-testid="text-vision-not-configured">
-            <Info className="mt-0.5 h-4 w-4 shrink-0" /> Live photo analysis is not configured yet. The demo still works.
-          </p>
-        )}
-      </section>
-
-      <MarketplaceNetwork />
-
-      <section className="mt-10">
-        <div className="flex items-baseline justify-between">
-          <h2 className="font-display text-xl font-bold">Live check outcomes</h2>
-          <Eyebrow>{s ? `${s.total} total` : ""}</Eyebrow>
-        </div>
-        {stats.isLoading ? (
-          <Skel className="mt-3 h-28" />
-        ) : stats.isError ? (
-          <div className="mt-3"><ErrorPanel message={apiError(stats.error).message} onRetry={() => stats.refetch()} /></div>
-        ) : s ? (
-          <div className="mt-3 grid grid-cols-3 gap-2">
-            {[
-              { l: "Passed", v: s.passed, c: "ok" },
-              { l: "Retake", v: s.retakeRequested, c: "retake" },
-              { l: "Review", v: s.manualReview, c: "review" },
-            ].map((x) => (
-              <div key={x.l} className={`${x.c} rounded-2xl p-3`} style={{ background: "hsl(var(--o-bg))", color: "hsl(var(--o))" }} data-testid={`stat-${x.l.toLowerCase()}`}>
-                <div className="font-display text-3xl font-extrabold">{x.v}</div>
-                <div className="font-mono text-[11px] font-semibold uppercase tracking-wider">{x.l}</div>
+        </nav>
+      </div>
+      <section className="aura-hero">
+        <div className="aura-wrap aura-reveal">
+          <div className="aura-hero-meta aura-mono"><span>A closer look. Before it goes live.</span><span>Evidence before assumption / 001</span></div>
+          <h1 data-testid="text-headline">Catch counterfeit<br className="aura-desktop-break" /> warning signs<br /> <em>before you list.</em></h1>
+          <div className="aura-hero-bottom">
+            <div>
+              <p className="aura-hero-copy">An estimated $467 billion in counterfeit goods crossed borders worldwide in 2021. Online marketplaces are one route to buyers. Fakeless helps marketplaces flag warning signs before an item gets listed.</p>
+              <a className="aura-source" href={OECD} target="_blank" rel="noopener noreferrer" data-testid="link-source-counterfeit-trade">OECD–EUIPO · 2025 report, 2021 estimate <ArrowUpRight size={12} /></a>
+              <div className="aura-actions">
+                <Link className="aura-button" href="/check/new" data-testid="link-start-check">Start a listing check <ArrowUpRight size={17} /></Link>
+                <Link className="aura-button secondary" href="/demo" data-testid="link-try-demo"><Play size={13} /> Try a demo</Link>
               </div>
-            ))}
-            <p className="col-span-3 font-mono text-[11px] text-muted-foreground">
-              {s.inProgress} in progress · {s.published} published
-            </p>
-          </div>
-        ) : null}
-      </section>
-
-      <section className="mt-8">
-        <h2 className="font-display text-xl font-bold">Recent live checks</h2>
-        <div className="mt-3 divide-y divide-foreground/10 overflow-hidden rounded-2xl border border-foreground/10 bg-card">
-          {checks.isLoading ? (
-            [0, 1, 2].map((i) => <div key={i} className="p-4"><Skel className="h-10" /></div>)
-          ) : checks.isError ? (
-            <div className="p-3"><ErrorPanel message={apiError(checks.error).message} onRetry={() => checks.refetch()} /></div>
-          ) : !checks.data?.length ? (
-            <div className="p-6 text-center">
-              <p className="font-display font-bold">The bench is empty</p>
-              <p className="mt-1 text-sm text-muted-foreground">Your first live check will show up here.</p>
             </div>
-          ) : (
-            checks.data.map((c) => (
-              <Link key={c.id} href={c.status === "in_progress" ? `/check/${c.id}` : `/check/${c.id}/result`}
-                data-testid={`row-check-${c.id}`} className="flex items-center gap-3 p-4 active:bg-muted">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold">{c.profileName}</p>
-                  <p className="font-mono text-[11px] text-muted-foreground">
-                    {money(c.askingPrice, c.currency)} · {format(new Date(c.createdAt), "MMM d, HH:mm")}
-                    {c.publishedAt ? " · published" : ""}
-                  </p>
-                </div>
-                <OutcomeChip status={c.status} />
-              </Link>
-            ))
-          )}
+            <div className="aura-caption aura-mono">Study 001 — construction detail<br />Look closer. Leave a record.</div>
+          </div>
+          <div className="aura-hero-foot aura-mono"><span><i className="aura-dot" /> A screening tool. Not authentication.</span><a href="#aura-checks">Explore the details <ArrowDown size={11} /></a></div>
         </div>
       </section>
-
-      <p className="mt-8 text-xs text-muted-foreground">
-        Background reading:{" "}
-        <a href="https://arcteryx.com/us/en/help/counterfeit" target="_blank" rel="noopener noreferrer" data-testid="link-arcteryx" className="underline underline-offset-4">
-          Arc'teryx counterfeit guidance
-        </a>
-        . This step screens for visible discrepancies only; it does not authenticate items.
-      </p>
-    </Shell>
+      <section className="aura-wrap aura-section" aria-labelledby="aura-context-title">
+        <div className="aura-section-head"><span className="aura-mono">01 / The bigger picture</span><h2 id="aura-context-title">The problem is real.<br /><em>The details matter.</em></h2></div>
+        <div className="aura-stat-grid">
+          <article className="aura-stat"><div className="aura-stat-number">52<span>%</span></div><p data-testid="text-statistic">Of young EU respondents surveyed said they had bought at least one counterfeit product online in the previous 12 months, knowingly or unknowingly.</p><a className="aura-source" href={EUIPO} target="_blank" rel="noopener noreferrer" data-testid="link-source-euipo">EUIPO · IP and Youth Scoreboard, 2022 <ArrowUpRight size={12} /></a></article>
+          <article className="aura-stat"><div className="aura-stat-number">62<span>%</span></div><p>Clothing, footwear and leather goods made up 62% of seized counterfeit goods worldwide.</p><a className="aura-source" href={OECD} target="_blank" rel="noopener noreferrer">OECD–EUIPO · Mapping Global Trade in Fakes, 2025 <ArrowUpRight size={12} /></a></article>
+        </div>
+      </section>
+      <section className="aura-wrap aura-section" id="aura-checks" aria-labelledby="aura-checks-title">
+        <div className="aura-section-head"><span className="aura-mono">02 / The field of view</span><h2 id="aura-checks-title">What Fakeless checks<span className="aura-accent">.</span></h2></div>
+        <div className="aura-checks-layout">
+          <div className="aura-evidence-art" role="img" aria-label="Illustrative monochrome textile and zipper study, not an analysis reference"><i className="aura-corner tl" /><i className="aura-corner br" /><div className="aura-art-label aura-mono">Look beyond the label.<span>Illustrative textile study / Not a check result</span></div></div>
+          <div>{categories.map(([name, detail], index) => <div className="aura-category" key={name}><button onClick={() => setOpenCategory(openCategory === index ? null : index)} aria-expanded={openCategory === index} aria-controls={`aura-category-${index}`}><span className="aura-mono">0{index + 1}</span><span>{name}</span>{openCategory === index ? <Minus /> : <Plus />}</button>{openCategory === index && <p id={`aura-category-${index}`}>{detail}</p>}</div>)}<p className="aura-category-note">Coverage varies by item. We show your screening tier before photos, rather than imply every item has an exact reference match.</p></div>
+        </div>
+      </section>
+      <section className="aura-wrap aura-section" id="aura-method" aria-labelledby="aura-method-title">
+        <div className="aura-section-head"><span className="aura-mono">03 / Know the limits</span><div><h2 id="aura-method-title">Not every item.<br /><em>The same depth.</em></h2><p className="aura-tiers-intro">Three levels of screening. The evidence available determines how far a check can go. None is a certificate of authenticity.</p></div></div>
+        {[
+          ["01 / When a reference exists", "Model-specific", "Enabled live profiles compare visible details with documented references for the exact model. The Beta LT currently has DEMO references only and is not live model verification."],
+          ["02 / When the category is known", "Category", "Check photo usability, read visible text and codes, and record expected details. No exact model-reference match is implied."],
+          ["03 / When coverage is limited", "Basic", "For items outside the supported categories, record photo quality and visible evidence. Limited coverage means limited conclusions."],
+        ].map(([label, title, text]) => <article className="aura-tier" key={title}><span className="aura-mono">{label}</span><h3>{title}</h3><p>{text}</p></article>)}
+      </section>
+      <section className="aura-process"><div className="aura-wrap aura-section">
+        <div className="aura-section-head"><span className="aura-mono">04 / Before you publish</span><h2>A better record.<br />Not another guess.</h2></div>
+        <div className="aura-step-list"><article className="aura-step"><span className="aura-mono">01 — Capture</span><h3>Show the small things.</h3><p>Use your phone camera or upload photos of your own clothes. Capture labels, logos, hardware and construction. Blurry details need a retake, not a confident answer.</p></article><article className="aura-step"><span className="aura-mono">02 — Review</span><h3>See what needs a pause.</h3><p>Review the findings and screening tier, retake missing evidence, and seek expert help when a concern remains. Publishing here is a mock marketplace action.</p></article></div>
+      </div></section>
+      <section className="aura-wrap aura-network-section"><MarketplaceNetwork /></section>
+      <section className="aura-wrap aura-section" aria-labelledby="aura-live-title">
+        <div className="aura-live-head"><h2 id="aura-live-title">On the record.</h2><span className="aura-mono">Live checks / Demo excluded</span></div>
+        <div className="aura-live-grid"><div><h3>Live check outcomes</h3>
+          {stats.isLoading ? <p role="status">Loading outcomes…</p> : stats.isError ? <p role="alert">{apiError(stats.error).message} <button onClick={() => stats.refetch()}>Retry</button></p> : s && <>
+            <div className="aura-counts">{[["Passed", s.passed], ["Photo checked", s.photoCheckComplete], ["Retake", s.retakeRequested], ["Review", s.manualReview]].map(([label, count]) => <div key={label}><strong>{count}</strong><span>{label}</span></div>)}</div>
+            <p className="aura-live-note">{s.inProgress} in progress · {s.published} mock published · {s.total} total<br />A completed photo check does not mean an item is authentic.</p>
+          </>}
+        </div><div><h3>Recent live checks</h3>
+          {checks.isLoading ? <p role="status">Loading checks…</p> : checks.isError ? <p role="alert">{apiError(checks.error).message} <button onClick={() => checks.refetch()}>Retry</button></p> : checks.data?.length ? <div className="aura-recent">{checks.data.map(c => <Link key={c.id} href={c.status === "in_progress" ? `/check/${c.id}` : `/check/${c.id}/result`}><div><strong>{c.profileName}</strong><small>{money(c.askingPrice, c.currency)} · {new Date(c.createdAt).toLocaleDateString()}</small></div><OutcomeChip status={c.status} /></Link>)}</div> : <div className="aura-empty"><ScanLine size={32} strokeWidth={1} /><div><h4>The bench is empty.</h4><p>No live checks yet. Your first check will appear here.</p></div></div>}
+        </div></div>
+        {s && !s.visionConfigured && <p className="aura-live-note" data-testid="text-vision-not-configured">Live photo analysis is not configured yet. You can explore the capture flow; photo analysis needs a server-side OpenAI key. The five sample demos work without a key.</p>}
+      </section>
+      <section className="aura-wrap aura-cta"><span className="aura-mono">The next listing deserves a closer look.</span><h2>Less assumption.<br /><em>More evidence.</em></h2><Link className="aura-button" href="/check/new">Start a listing check <ArrowUpRight size={17} /></Link><p>Fakeless screens for visible discrepancies only. It does not authenticate items, certify originality or replace a qualified expert.</p></section>
+      <footer className="aura-wrap aura-footer"><Link className="aura-wordmark" href="/">fakeless<span>.</span></Link><p>For the details worth documenting. For the questions worth asking.<br />Evidence before listing. Never a guarantee of authenticity.</p><a href="https://arcteryx.com/us/en/help/counterfeit" target="_blank" rel="noopener noreferrer" className="aura-source" data-testid="link-arcteryx">Arc’teryx counterfeit guidance <ArrowUpRight size={12} /></a></footer>
+    </main>
   );
 }
