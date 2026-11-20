@@ -69,6 +69,10 @@ export default defineConfig({
     strictPort: true,
     host: '0.0.0.0',
     allowedHosts: true,
+    // Replit's router sent /api to the API server; locally Vite proxies it.
+    proxy: {
+      '/api': `http://localhost:${process.env.API_PORT ?? 8080}`,
+    },
     fs: {
       strict: true,
     },
