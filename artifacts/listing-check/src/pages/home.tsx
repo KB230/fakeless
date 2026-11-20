@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { ArrowUpRight, ArrowDown, Plus, Minus, ScanLine, Play } from "lucide-react";
 import { useGetStatsSummary, getGetStatsSummaryQueryKey, useListChecks, getListChecksQueryKey } from "@workspace/api-client-react";
 import { OutcomeChip } from "@/components/bits";
+import { Wordmark } from "@/components/wordmark";
 import { MarketplaceNetwork } from "@/components/marketplace-network";
 import { apiError, asset, money } from "@/lib/helpers";
 import "./home-aura.css";
@@ -27,7 +28,7 @@ export default function Home() {
     <main className="aura" id="aura-top" style={{ "--aura-textile": `url("${asset("images/fakeless-aura-textile.jpg")}")` } as CSSProperties}>
       <div className="aura-wrap">
         <nav className="aura-nav" aria-label="Main navigation">
-          <Link className="aura-wordmark" href="/" aria-label="Fakeless home">fakeless<span>.</span></Link>
+          <Link className="aura-wordmark" href="/" aria-label="Fakeless home"><Wordmark /></Link>
           <div className="aura-navlinks">
             <a href="#aura-checks">What we check</a><a href="#aura-method">The approach</a>
             <Link href="/check/new" className="aura-navcheck">Start a check <ArrowUpRight size={16} /></Link>
@@ -92,7 +93,7 @@ export default function Home() {
         {s && !s.visionConfigured && <p className="aura-live-note" data-testid="text-vision-not-configured">Live photo analysis is not configured yet. You can explore the capture flow; photo analysis needs a server-side OpenAI key. The five sample demos work without a key.</p>}
       </section>
       <section className="aura-wrap aura-cta"><span className="aura-mono">The next listing deserves a closer look.</span><h2>Less assumption.<br /><em>More evidence.</em></h2><Link className="aura-button" href="/check/new">Start a listing check <ArrowUpRight size={17} /></Link><p>Fakeless screens for visible discrepancies only. It does not authenticate items, certify originality or replace a qualified expert.</p></section>
-      <footer className="aura-wrap aura-footer"><Link className="aura-wordmark" href="/">fakeless<span>.</span></Link><p>For the details worth documenting. For the questions worth asking.<br />Evidence before listing. Never a guarantee of authenticity.</p><a href={OECD} target="_blank" rel="noopener noreferrer" className="aura-source">OECD–EUIPO counterfeit trade report <ArrowUpRight size={12} /></a></footer>
+      <footer className="aura-wrap aura-footer"><Link className="aura-wordmark" href="/"><Wordmark /></Link><p>For the details worth documenting. For the questions worth asking.<br />Evidence before listing. Never a guarantee of authenticity.</p><a href={OECD} target="_blank" rel="noopener noreferrer" className="aura-source">OECD–EUIPO counterfeit trade report <ArrowUpRight size={12} /></a></footer>
     </main>
   );
 }

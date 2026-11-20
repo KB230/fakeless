@@ -51,7 +51,7 @@ export function VoiceGuide({
   useEffect(() => () => audioRef.current?.pause(), []);
 
   return (
-    <div className="rounded-xl border border-foreground/10 bg-card/70 p-3" data-testid={`voice-${promptId}`}>
+    <div className="rounded-xl border border-foreground/10 bg-card/80 p-3 backdrop-blur-xl" data-testid={`voice-${promptId}`}>
       <div className="flex items-start gap-3">
         {available && state !== "failed" ? (
           <button

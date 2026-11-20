@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { ArrowLeft, CheckCircle2, RotateCcw, UserSearch, AlertTriangle, ImageOff } from "lucide-react";
 import type { ReferencePhoto } from "@workspace/api-client-react";
 import { asset } from "@/lib/helpers";
+import { Wordmark } from "@/components/wordmark";
 
 export const OUTCOME = {
   passed: { label: "Passed listing checks", cls: "ok", Icon: CheckCircle2, short: "Passed" },
@@ -14,7 +15,7 @@ export const OUTCOME = {
 export function Shell({ children, back, title }: { children: ReactNode; back?: string; title?: string }) {
   return (
     <div className="min-h-[100dvh] bench-grid">
-      <header className="sticky top-0 z-40 border-b border-foreground/10 bg-background/85 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b border-foreground/10 bg-background/85 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-xl items-center gap-3 px-4">
           {back ? (
             <Link href={back} data-testid="link-back" className="-ml-2 grid h-11 w-11 place-items-center rounded-full active:bg-muted" aria-label="Back">
@@ -22,7 +23,7 @@ export function Shell({ children, back, title }: { children: ReactNode; back?: s
             </Link>
           ) : null}
           <Link href="/" data-testid="link-home" className="flex items-center gap-2">
-            <span className="font-display text-[32px] font-normal leading-none" aria-label="Fakeless">fakeless.</span>
+            <Wordmark />
           </Link>
           <nav className="ml-auto flex gap-1 text-sm">
             <Link href="/demo" data-testid="link-demo" className="rounded-full px-3 py-2 font-medium hover:bg-muted">Demo</Link>
@@ -50,7 +51,7 @@ export function OutcomeChip({ status }: { status: string }) {
 
 export function DemoBanner() {
   return (
-    <div data-testid="banner-demo" className="mb-4 flex items-center gap-2 rounded-xl border-2 border-dashed border-primary/60 bg-primary/10 px-3 py-2.5 text-sm font-medium text-foreground">
+    <div data-testid="banner-demo" className="mb-4 flex items-center gap-2 rounded-xl border border-primary/60 bg-card/80 px-3 py-2.5 text-sm font-medium text-foreground backdrop-blur-xl">
       <span className="rounded bg-primary px-1.5 py-0.5 font-mono text-[10px] font-bold text-primary-foreground">DEMO</span>
       Demo — sample photos and sample codes, not a live check
     </div>
