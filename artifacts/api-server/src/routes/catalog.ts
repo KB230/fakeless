@@ -24,7 +24,11 @@ import { visionConfigured } from "../lib/vision";
 const router: IRouter = Router();
 
 router.get("/profiles", (_req, res) => {
-  res.json(ListProfilesResponse.parse(PROFILES));
+  // Public profile discovery only exposes models that are ready for real checks.
+  // Demo-only profiles stay available to their sample cases, not live setup.
+  res.json(ListProfilesResponse.parse(PROFILES.filter(
+    (profile) => profile.kind !== "model" || (profile.liveEnabled && profile.referenceStatus === "documented"),
+  )));
 });
 
 router.get("/profiles/:profileId", (req, res) => {
@@ -32,6 +36,21 @@ router.get("/profiles/:profileId", (req, res) => {
   const profile = getProfileById(profileId);
   if (!profile) {
     res.status(404).json({ error: "Profile not found." });
+    return;
+  }
+  // Keep the existing outerwear demo intact without presenting a specific
+  // brand as the focus of Fakeless in public demo screens or API payloads.
+  if (profile.kind === "model" && profile.referenceStatus === "demo") {
+    res.json({
+      ...profile,
+      brand: "Sample",
+      model: "Outerwear example",
+      generation: "Illustrative demo set",
+      colorway: null,
+      category: "Outerwear",
+      referenceNote: "Illustrative sample references and codes, used only in demo cases.",
+      sources: [],
+    });
     return;
   }
   res.json(profile);

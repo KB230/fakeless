@@ -37,4 +37,4 @@ Mobile-first counterfeit screening step for clothing resellers: before publishin
 
 ## Gotchas
 
-- Beta LT uses demo reference images and sample code `LC-SAMPLE-29090`; documented references and an enabled live profile are needed for live model verification.
+- The sample outerwear profile uses DEMO reference images and sample codes; it is excluded from live model verification. Live model checks require sourced references and an enabled profile.

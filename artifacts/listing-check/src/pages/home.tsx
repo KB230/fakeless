@@ -69,7 +69,7 @@ export default function Home() {
       <section className="aura-wrap aura-section" id="aura-method" aria-labelledby="aura-method-title">
         <div className="aura-section-head"><span className="aura-mono">03 / Know the limits</span><div><h2 id="aura-method-title">Not every item.<br /><em>The same depth.</em></h2><p className="aura-tiers-intro">Three levels of screening. The evidence available determines how far a check can go. None is a certificate of authenticity.</p></div></div>
         {[
-          ["01 / When a reference exists", "Model-specific", "Enabled live profiles compare visible details with documented references for the exact model. The Beta LT currently has DEMO references only and is not live model verification."],
+          ["01 / When a reference exists", "Model-specific", "Enabled live profiles compare visible details with documented references for the exact model. Demo references are never used to verify real listings."],
           ["02 / When the category is known", "Category", "Check photo usability, read visible text and codes, and record expected details. No exact model-reference match is implied."],
           ["03 / When coverage is limited", "Basic", "For items outside the supported categories, record photo quality and visible evidence. Limited coverage means limited conclusions."],
         ].map(([label, title, text]) => <article className="aura-tier" key={title}><span className="aura-mono">{label}</span><h3>{title}</h3><p>{text}</p></article>)}
@@ -92,7 +92,7 @@ export default function Home() {
         {s && !s.visionConfigured && <p className="aura-live-note" data-testid="text-vision-not-configured">Live photo analysis is not configured yet. You can explore the capture flow; photo analysis needs a server-side OpenAI key. The five sample demos work without a key.</p>}
       </section>
       <section className="aura-wrap aura-cta"><span className="aura-mono">The next listing deserves a closer look.</span><h2>Less assumption.<br /><em>More evidence.</em></h2><Link className="aura-button" href="/check/new">Start a listing check <ArrowUpRight size={17} /></Link><p>Fakeless screens for visible discrepancies only. It does not authenticate items, certify originality or replace a qualified expert.</p></section>
-      <footer className="aura-wrap aura-footer"><Link className="aura-wordmark" href="/">fakeless<span>.</span></Link><p>For the details worth documenting. For the questions worth asking.<br />Evidence before listing. Never a guarantee of authenticity.</p><a href="https://arcteryx.com/us/en/help/counterfeit" target="_blank" rel="noopener noreferrer" className="aura-source" data-testid="link-arcteryx">Arc’teryx counterfeit guidance <ArrowUpRight size={12} /></a></footer>
+      <footer className="aura-wrap aura-footer"><Link className="aura-wordmark" href="/">fakeless<span>.</span></Link><p>For the details worth documenting. For the questions worth asking.<br />Evidence before listing. Never a guarantee of authenticity.</p><a href={OECD} target="_blank" rel="noopener noreferrer" className="aura-source">OECD–EUIPO counterfeit trade report <ArrowUpRight size={12} /></a></footer>
     </main>
   );
 }

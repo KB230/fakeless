@@ -59,7 +59,10 @@ export default function Result() {
         <p className="mt-3 font-mono text-xs font-semibold uppercase tracking-widest" style={{ color: "hsl(var(--o))" }} data-testid="text-outcome-label">{o.label}</p>
         <h1 className="font-display mt-1 text-[28px] font-extrabold leading-tight" data-testid="text-headline">{d.headline}</h1>
         <p className="mt-3 font-mono text-[11px] text-foreground/60">
-          {profile.data ? `${profile.data.brand} ${profile.data.model} · ` : ""}{CONDITION_LABEL[c.condition]} · {money(c.askingPrice, c.currency)}
+          {c.mode === "demo"
+            ? `${c.categoryId === "outerwear" ? "Outerwear" : "Sample item"} · `
+            : profile.data ? `${profile.data.category} · ` : ""}
+          {CONDITION_LABEL[c.condition]} · {money(c.askingPrice, c.currency)}
         </p>
       </section>
 

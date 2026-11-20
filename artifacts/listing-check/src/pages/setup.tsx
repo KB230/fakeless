@@ -22,6 +22,7 @@ export default function Setup() {
   const categories = useListCategories();
   const tierParams = { categoryId, ...(profileId ? { profileId } : {}) };
   const tier = useResolveScreeningTier(tierParams, { query: { enabled: !!categoryId, queryKey: getResolveScreeningTierQueryKey(tierParams) } });
+  const liveProfilesForCategory = profiles.data?.filter(p => p.kind === "model" && p.categoryId === categoryId && p.liveEnabled && p.referenceStatus === "documented") ?? [];
   const [condition, setCondition] = useState<ItemCondition | null>(null);
   const [price, setPrice] = useState("");
   const priceNum = Number(price);
@@ -59,7 +60,7 @@ export default function Setup() {
         ) : !profiles.data?.length ? (
           <p className="rounded-xl bg-muted p-4 text-sm text-muted-foreground">No product profiles are available yet.</p>
         ) : (
-          profiles.data.filter(p => p.kind === "model" && p.categoryId === categoryId).map((p) => {
+          liveProfilesForCategory.map((p) => {
             const on = p.id === profileId;
             return (
               <button key={p.id} onClick={() => setProfileId(p.id)} data-testid={`button-profile-${p.id}`}
@@ -87,6 +88,11 @@ export default function Setup() {
           })
         )}
       </div>
+      {categoryId && !profiles.isLoading && !profiles.isError && liveProfilesForCategory.length === 0 && (
+        <p className="mt-3 rounded-xl bg-muted p-3 text-xs text-muted-foreground">
+          No documented model-specific references are available for this category yet. Continue with the category checklist; demo examples are kept separate.
+        </p>
+      )}
       {categoryId && <div className="mt-4 rounded-xl border border-primary/30 bg-card p-4" data-testid="panel-screening-tier">
         {tier.isLoading || tier.isFetching ? <p>Finding your screening tier…</p> : tier.isError ? <ErrorPanel message={apiError(tier.error).message} onRetry={() => tier.refetch()} /> : tier.data && <>
           <h2 className="font-display text-2xl">{tier.data.title}</h2><p className="mt-2 text-sm text-muted-foreground">{tier.data.note}</p>
