@@ -18,11 +18,18 @@ export const checksTable = pgTable("checks", {
   id: text("id").primaryKey(),
   mode: text("mode").notNull(), // "live" | "demo"
   demoCaseId: text("demo_case_id"),
+  /** "model_specific" | "category_checklist" | "basic_photo", chosen by the backend */
+  tier: text("tier").notNull().default("model_specific"),
+  tierNote: text("tier_note").notNull().default(""),
+  categoryId: text("category_id").notNull().default("outerwear"),
   profileId: text("profile_id").notNull(),
   condition: text("condition").notNull(),
   askingPrice: doublePrecision("asking_price").notNull(),
   currency: text("currency").notNull().default("USD"),
+  /** Legacy single wash-tag answer; superseded by `presence`. */
   washTagPresent: boolean("wash_tag_present"),
+  /** Seller answers to the profile's presence questions, keyed by question id. */
+  presence: jsonb("presence").$type<Record<string, boolean>>().notNull().default({}),
   status: text("status").notNull().default("in_progress"),
   decision: jsonb("decision"),
   publishedAt: timestamp("published_at", { withTimezone: true }),

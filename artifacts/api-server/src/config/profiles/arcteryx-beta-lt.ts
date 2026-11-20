@@ -1,24 +1,24 @@
-import type { ProductProfile } from "@workspace/api-zod";
-import {
-  captureInstruction,
-  captureVoicePromptId,
-} from "../voicePrompts";
+import { defineProfile, WASH_TAG_QUESTION } from "./define";
 
 /**
- * Arc'teryx Beta LT jacket profile.
+ * Arc'teryx Beta LT jacket — the DEMO model-specific profile (outerwear).
  *
  * No documented model-specific reference photos or style codes have been
  * supplied yet, so this profile uses clearly labeled DEMO reference images and
- * SAMPLE codes. Live checks against a demo profile are routed to manual review
- * ("reference evidence insufficient") — they can never pass on demo evidence.
+ * SAMPLE codes, and `liveEnabled` is false. Live checks that pick this model
+ * get the outerwear category checklist instead; only demo cases use this
+ * profile, and it can never pass a live check.
  *
- * To make this profile live-capable: replace the reference images with
- * documented photos for a specific release, set `referenceStatus` to
- * "documented", and replace `expectedCodes` with documented style/model codes
- * (`isSample: false`).
+ * To make it live-capable: replace the reference images with documented photos
+ * for a specific release, set `referenceStatus: "documented"`, replace
+ * `expectedCodes` with documented codes (`isSample: false`) and set
+ * `liveEnabled: true`.
  */
-export const arcteryxBetaLt: ProductProfile = {
+export const arcteryxBetaLt = defineProfile({
   id: "arcteryx-beta-lt",
+  kind: "model",
+  categoryId: "outerwear",
+  liveEnabled: false,
   brand: "Arc'teryx",
   model: "Beta LT Jacket",
   generation: "Release not yet documented (demo reference set)",
@@ -26,12 +26,9 @@ export const arcteryxBetaLt: ProductProfile = {
   category: "Technical shell jacket",
   referenceStatus: "demo",
   referenceNote:
-    "Reference photos are illustrative demo images and the style code is a sample code. Live checks with this profile go to manual review until documented references for a specific release are added.",
+    "Reference photos are illustrative demo images and the style code is a sample code. This profile is used by the demo only; live checks for this model use the outerwear checklist until documented references are added.",
   sources: [
-    {
-      label: "Arc'teryx official counterfeit guidance",
-      url: "https://arcteryx.com/us/en/help/counterfeit",
-    },
+    { label: "Arc'teryx official counterfeit guidance", url: "https://arcteryx.com/us/en/help/counterfeit" },
   ],
   expectedCodes: [
     {
@@ -41,19 +38,21 @@ export const arcteryxBetaLt: ProductProfile = {
       isSample: true,
     },
   ],
-  washTag: { expected: true, requireBothSides: true },
+  presenceQuestions: [WASH_TAG_QUESTION],
   steps: [
     {
       id: "logo",
       title: "Logo and wordmark",
-      instruction: captureInstruction("logo"),
-      voicePromptId: captureVoicePromptId("logo"),
+      noun: "logo photo",
+      instruction:
+        "Lay the jacket flat on a table. Hold your phone parallel to the chest and move in until the full bird logo and the wordmark below it fill the frame, with a little fabric showing on every side.",
+      retakeInstruction: "Fit the full bird logo and the whole wordmark in frame.",
+      required: true,
       framingTips: [
         "Whole bird logo and full wordmark in frame",
         "Phone parallel to the fabric, not tilted",
         "Even light, no flash glare on the embroidery",
       ],
-      required: true,
       comparisonFocus: [
         "Letterforms and lettering weight",
         "Letter spacing",
@@ -73,18 +72,16 @@ export const arcteryxBetaLt: ProductProfile = {
     {
       id: "wash_tag_front",
       title: "Wash tag, front",
-      instruction: captureInstruction("wash_tag_front"),
-      voicePromptId: captureVoicePromptId("wash_tag_front"),
-      framingTips: [
-        "Lay the tag flat",
-        "Every printed letter and digit in frame",
-        "Close enough that the code is sharp",
-      ],
+      noun: "front of the wash tag",
+      instruction:
+        "Find the care tag inside the jacket. Lay the wash tag flat and move closer until the entire code is in frame, including every printed letter and digit.",
+      retakeInstruction: "Lay the wash tag flat and move closer until the entire code is in frame.",
       required: true,
-      comparisonFocus: [
-        "Style or model code (only when its label identifies it)",
-        "Print sharpness and alignment",
-      ],
+      presenceQuestionId: "wash_tag",
+      readsText: true,
+      compareCodes: true,
+      framingTips: ["Lay the tag flat", "Every printed letter and digit in frame", "Close enough that the code is sharp"],
+      comparisonFocus: ["Style or model code (only when its label identifies it)", "Print sharpness and alignment"],
       references: [
         {
           imageUrl: "references/beta-lt/wash-tag-front.jpg",
@@ -97,13 +94,15 @@ export const arcteryxBetaLt: ProductProfile = {
     {
       id: "wash_tag_back",
       title: "Wash tag, back",
-      instruction: captureInstruction("wash_tag_back"),
-      voicePromptId: captureVoicePromptId("wash_tag_back"),
-      framingTips: [
-        "Flip the tag over and lay it flat",
-        "Every printed letter and digit in frame",
-      ],
+      noun: "back of the wash tag",
+      instruction:
+        "Turn the wash tag over. Lay it flat and capture the back side, making sure every printed letter and digit is in frame and sharp.",
+      retakeInstruction: "Lay the tag flat and make sure every printed letter and digit is in frame.",
       required: true,
+      presenceQuestionId: "wash_tag",
+      readsText: true,
+      compareCodes: true,
+      framingTips: ["Flip the tag over and lay it flat", "Every printed letter and digit in frame"],
       comparisonFocus: ["Printed text and care symbols", "Any additional codes"],
       references: [
         {
@@ -117,18 +116,13 @@ export const arcteryxBetaLt: ProductProfile = {
     {
       id: "zipper",
       title: "Zipper hardware",
-      instruction: captureInstruction("zipper"),
-      voicePromptId: captureVoicePromptId("zipper"),
-      framingTips: [
-        "Pull tab and top of zipper in frame",
-        "Straight on, good light",
-      ],
+      noun: "zipper photo",
+      instruction:
+        "Photograph the main front zipper straight on. Include the pull tab and the top of the zipper, in good light, close enough to see any markings.",
+      retakeInstruction: "Show the pull tab and the top of the zipper straight on.",
       required: true,
-      comparisonFocus: [
-        "Markings on the slider and pull",
-        "Pull tab construction",
-        "Zipper coating and placement",
-      ],
+      framingTips: ["Pull tab and top of zipper in frame", "Straight on, good light"],
+      comparisonFocus: ["Markings on the slider and pull", "Pull tab construction", "Zipper coating and placement"],
       references: [
         {
           imageUrl: "references/beta-lt/zipper.jpg",
@@ -141,17 +135,13 @@ export const arcteryxBetaLt: ProductProfile = {
     {
       id: "seam_tape",
       title: "Interior seam tape",
-      instruction: captureInstruction("seam_tape"),
-      voicePromptId: captureVoicePromptId("seam_tape"),
-      framingTips: [
-        "Inside the shoulder seam",
-        "A straight run of tape, close and in focus",
-      ],
+      noun: "seam tape photo",
+      instruction:
+        "Open the jacket and find the taped seam inside the shoulder. Move close and photograph a straight run of seam tape, in focus and evenly lit.",
+      retakeInstruction: "Show a straight run of seam tape, close and evenly lit.",
       required: true,
-      comparisonFocus: [
-        "Tape width and consistency",
-        "Edge adhesion and placement along the seam",
-      ],
+      framingTips: ["Inside the shoulder seam", "A straight run of tape, close and in focus"],
+      comparisonFocus: ["Tape width and consistency", "Edge adhesion and placement along the seam"],
       references: [
         {
           imageUrl: "references/beta-lt/seam-tape.jpg",
@@ -162,4 +152,4 @@ export const arcteryxBetaLt: ProductProfile = {
       ],
     },
   ],
-};
+});

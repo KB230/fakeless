@@ -9,10 +9,12 @@ import {
   ListDemoCasesResponse,
   ListProfilesResponse,
   ListVoicePromptsResponse,
+  ListCategoriesResponse,
+  ResolveScreeningTierQueryParams,
+  ResolveScreeningTierResponse,
   RunDemoCaseParams,
-  type StepId,
 } from "@workspace/api-zod";
-import { PROFILES, getProfileById } from "../config/profiles";
+import { CATEGORIES, PROFILES, getProfileById, resolveTier } from "../config/profiles";
 import { DEMO_CASES, getDemoCase } from "../config/demoCases";
 import { VOICE_PROMPTS } from "../config/voicePrompts";
 import { evaluateAndRecord, upsertPhoto } from "../lib/checks";
@@ -35,14 +37,28 @@ router.get("/profiles/:profileId", (req, res) => {
   res.json(profile);
 });
 
+router.get("/categories", (_req, res) => {
+  res.json(ListCategoriesResponse.parse(CATEGORIES));
+});
+
+router.get("/screening-tier", (req, res) => {
+  const parsed = ResolveScreeningTierQueryParams.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: "categoryId is required." });
+    return;
+  }
+  res.json(ResolveScreeningTierResponse.parse(resolveTier(parsed.data.categoryId, parsed.data.profileId)));
+});
+
 router.get("/demo-cases", (_req, res) => {
   res.json(
     ListDemoCasesResponse.parse(
-      DEMO_CASES.map(({ id, title, description, expectedOutcome, profileId }) => ({
+      DEMO_CASES.map(({ id, title, description, expectedOutcome, tier, profileId }) => ({
         id,
         title,
         description,
         expectedOutcome,
+        tier,
         profileId,
       })),
     ),
@@ -61,14 +77,17 @@ router.post("/demo-cases/:caseId/run", async (req, res) => {
     id,
     mode: "demo",
     demoCaseId: demo.id,
+    tier: demo.tier,
+    tierNote: demo.tierNote,
+    categoryId: demo.categoryId,
     profileId: demo.profileId,
     condition: demo.condition,
     askingPrice: demo.askingPrice,
     currency: "USD",
-    washTagPresent: demo.washTagPresent,
+    presence: demo.presence,
   });
   for (const [stepId, photo] of Object.entries(demo.photos)) {
-    if (photo) await upsertPhoto(id, stepId as StepId, photo.observation, photo.imageUrl);
+    if (photo) await upsertPhoto(id, stepId, photo.observation, photo.imageUrl);
   }
   res.json(await evaluateAndRecord(id));
 });
@@ -113,6 +132,7 @@ router.get("/stats/summary", async (_req, res) => {
     .select({
       total: sql<number>`count(*)::int`,
       passed: sql<number>`count(*) filter (where ${checksTable.status} = 'passed')::int`,
+      photoCheckComplete: sql<number>`count(*) filter (where ${checksTable.status} = 'photo_check_complete')::int`,
       retakeRequested: sql<number>`count(*) filter (where ${checksTable.status} = 'retake_requested')::int`,
       manualReview: sql<number>`count(*) filter (where ${checksTable.status} = 'manual_review')::int`,
       inProgress: sql<number>`count(*) filter (where ${checksTable.status} = 'in_progress')::int`,

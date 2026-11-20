@@ -12,7 +12,7 @@ import {
   type Check,
   type CheckDecision,
   type PhotoObservation,
-  type StepId,
+  type ScreeningTier,
 } from "@workspace/api-zod";
 import { getProfileById } from "../config/profiles";
 import { decide } from "./rules";
@@ -34,11 +34,14 @@ export function serializeCheck(check: CheckRow, photos: CheckPhotoRow[]): Check 
     id: check.id,
     mode: check.mode,
     demoCaseId: check.demoCaseId,
+    tier: check.tier,
+    tierNote: check.tierNote,
+    categoryId: check.categoryId,
     profileId: check.profileId,
     condition: check.condition,
     askingPrice: check.askingPrice,
     currency: check.currency,
-    washTagPresent: check.washTagPresent,
+    presence: check.presence ?? {},
     status: check.status,
     decision: check.decision ?? null,
     photos: photos
@@ -58,7 +61,7 @@ export function serializeCheck(check: CheckRow, photos: CheckPhotoRow[]): Check 
 
 export async function upsertPhoto(
   checkId: string,
-  stepId: StepId,
+  stepId: string,
   observation: PhotoObservation,
   imageUrl: string | null,
 ): Promise<CheckPhotoRow> {
@@ -80,13 +83,14 @@ export async function evaluateAndRecord(checkId: string): Promise<Check> {
   const profile = getProfileById(check.profileId);
   if (!profile) throw new Error(`Unknown profile ${check.profileId}`);
 
-  const observations: Partial<Record<StepId, PhotoObservation>> = {};
-  for (const p of photos) observations[p.stepId as StepId] = p.observation as PhotoObservation;
+  const observations: Partial<Record<string, PhotoObservation>> = {};
+  for (const p of photos) observations[p.stepId] = p.observation as PhotoObservation;
 
   const decision: CheckDecision = decide({
     profile,
+    tier: check.tier as ScreeningTier,
     mode: check.mode as "live" | "demo",
-    washTagPresent: check.washTagPresent,
+    presence: check.presence ?? {},
     observations,
   });
 

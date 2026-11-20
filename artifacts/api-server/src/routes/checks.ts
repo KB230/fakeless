@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { Router, type IRouter } from "express";
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import { checksTable, db } from "@workspace/db";
 import {
   CreateCheckBody,
@@ -10,13 +10,14 @@ import {
   ListChecksResponse,
   PublishListingParams,
   PublishListingResponse,
-  SetWashTagPresenceBody,
-  SetWashTagPresenceParams,
+  SetDetailPresenceBody,
+  SetDetailPresenceParams,
   UploadCheckPhotoBody,
   UploadCheckPhotoParams,
   UploadCheckPhotoResponse,
 } from "@workspace/api-zod";
-import { getProfileById, profileDisplayName } from "../config/profiles";
+import { getProfileById, profileDisplayName, resolveTier } from "../config/profiles";
+import { PUBLISHABLE_OUTCOMES } from "../lib/rules";
 import {
   evaluateAndRecord,
   loadCheck,
@@ -46,6 +47,7 @@ router.get("/checks", async (req, res) => {
         const p = getProfileById(r.profileId);
         return {
           id: r.id,
+          tier: r.tier,
           profileId: r.profileId,
           profileName: p ? profileDisplayName(p) : r.profileId,
           status: r.status,
@@ -66,16 +68,21 @@ router.post("/checks", async (req, res) => {
     return;
   }
   const body = parsed.data;
-  if (!getProfileById(body.profileId)) {
+  if (body.profileId && !getProfileById(body.profileId)) {
     res.status(400).json({ error: "Unknown product profile." });
     return;
   }
+  // The backend chooses the screening tier and the profile used.
+  const tier = resolveTier(body.categoryId, body.profileId);
   const [row] = await db
     .insert(checksTable)
     .values({
       id: randomUUID(),
       mode: "live",
-      profileId: body.profileId,
+      tier: tier.tier,
+      tierNote: tier.note,
+      categoryId: tier.categoryId,
+      profileId: tier.profileId,
       condition: body.condition,
       askingPrice: body.askingPrice,
       currency: body.currency ?? "USD",
@@ -148,9 +155,14 @@ router.post("/checks/:checkId/photos", async (req, res) => {
   }
 });
 
-router.put("/checks/:checkId/wash-tag", async (req, res) => {
-  const { checkId } = SetWashTagPresenceParams.parse(req.params);
-  const { present } = SetWashTagPresenceBody.parse(req.body);
+router.put("/checks/:checkId/presence", async (req, res) => {
+  const { checkId } = SetDetailPresenceParams.parse(req.params);
+  const parsed = SetDetailPresenceBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid answer." });
+    return;
+  }
+  const { questionId, present } = parsed.data;
   const loaded = await loadCheck(checkId);
   if (!loaded) {
     res.status(404).json({ error: "Check not found." });
@@ -160,9 +172,14 @@ router.put("/checks/:checkId/wash-tag", async (req, res) => {
     res.status(409).json({ error: "This check can't be changed." });
     return;
   }
+  const profile = getProfileById(loaded.check.profileId);
+  if (!profile?.presenceQuestions.some((q) => q.id === questionId)) {
+    res.status(400).json({ error: "This question doesn't apply to this check." });
+    return;
+  }
   const [row] = await db
     .update(checksTable)
-    .set({ washTagPresent: present, status: "in_progress", decision: null })
+    .set({ presence: { ...(loaded.check.presence ?? {}), [questionId]: present }, status: "in_progress", decision: null })
     .where(eq(checksTable.id, checkId))
     .returning();
   res.json(serializeCheck(row!, loaded.photos));
@@ -202,17 +219,17 @@ router.post("/checks/:checkId/publish", async (req, res) => {
         listingId: check.listingId,
         publishedAt: check.publishedAt,
         mode: check.mode,
-        message: publishMessage(check.mode),
+        message: publishMessage(check.mode, check.status),
       }),
     );
     return;
   }
   const decisionOutcome = (check.decision as { outcome?: string } | null)?.outcome;
-  if (check.status !== "passed" || decisionOutcome !== "passed") {
+  if (!PUBLISHABLE_OUTCOMES.has(check.status) || decisionOutcome !== check.status) {
     req.log.warn({ checkId, status: check.status }, "Publish blocked: no recorded pass");
     res.status(409).json({
       error:
-        "Publishing is blocked: this listing doesn't have a recorded \"Passed listing checks\" result.",
+        "Publishing is blocked: this listing doesn't have a recorded \"Passed listing checks\" or \"Photo check complete\" result.",
     });
     return;
   }
@@ -223,7 +240,7 @@ router.post("/checks/:checkId/publish", async (req, res) => {
     .where(
       and(
         eq(checksTable.id, checkId),
-        eq(checksTable.status, "passed"),
+        inArray(checksTable.status, [...PUBLISHABLE_OUTCOMES]),
         isNull(checksTable.publishedAt),
       ),
     )
@@ -238,15 +255,17 @@ router.post("/checks/:checkId/publish", async (req, res) => {
       listingId: row.listingId,
       publishedAt: row.publishedAt,
       mode: row.mode,
-      message: publishMessage(row.mode),
+      message: publishMessage(row.mode, row.status),
     }),
   );
 });
 
-function publishMessage(mode: string): string {
-  return mode === "demo"
-    ? "Demo listing published (mock). Nothing was posted to a real marketplace."
-    : "Listing published (mock). In a marketplace integration this is where the listing would go live.";
+function publishMessage(mode: string, status: string): string {
+  const base =
+    mode === "demo"
+      ? "Demo listing published on the Fakeless mock marketplace. Nothing was posted to a real marketplace."
+      : "Listing published on the Fakeless mock marketplace. In a marketplace integration this is where the listing would go live.";
+  return status === "photo_check_complete" ? `${base} It is labeled "Photo checked · model not verified".` : base;
 }
 
 export default router;

@@ -120,15 +120,20 @@ const OBSERVATION_SCHEMA = {
 } as const;
 
 function buildInstructions(profile: ProductProfile, step: InspectionStep, hasReference: boolean): string {
-  const isTag = step.id === "wash_tag_front" || step.id === "wash_tag_back";
+  const isTag = step.readsText;
+  const modelProfile = profile.kind === "model";
   return [
     "You are a careful visual inspector assisting a resale marketplace. You report only what is visible. You never declare an item authentic or counterfeit; you return structured observations and the platform's rules decide the outcome.",
-    `Product profile: ${profile.brand} ${profile.model} — ${profile.generation}${profile.colorway ? `, colorway: ${profile.colorway}` : ""}.`,
+    modelProfile
+      ? `Product profile: ${profile.brand} ${profile.model} — ${profile.generation}${profile.colorway ? `, colorway: ${profile.colorway}` : ""}.`
+      : `Category checklist: ${profile.category}. The brand and model are unknown and must not be guessed or judged.`,
     `Inspection step: ${step.title}. What the seller was asked to capture: ${step.instruction}`,
-    `Details to compare: ${step.comparisonFocus.join("; ")}.`,
+    step.comparisonFocus.length > 0 ? `Details to compare: ${step.comparisonFocus.join("; ")}.` : "List the visible details that a reviewer would want to see for this step.",
     hasReference
       ? "The FIRST image is the seller's photo. The images after it are reference photos for this step. Compare the seller's photo to the references only where the angle and quality allow."
-      : "Only the seller's photo is provided; no reference image is available for comparison, so set comparisonReliable to false and explain in uncertaintyNote.",
+      : modelProfile
+        ? "Only the seller's photo is provided; no reference image is available for comparison, so set comparisonReliable to false and explain in uncertaintyNote."
+        : "This is a category-level check with no model reference. Do not compare against any brand or judge authenticity: return differences as an empty array, set comparisonReliable to false and uncertaintyNote to 'Category check: no model reference.'",
     "Photo quality: set quality.usable=false if the required subject is blurry, cropped/partly out of frame, too far away, at an unusable angle, too dark, obscured by glare, or not the requested subject. List every issue. Be strict for text: if any printed characters needed for a code are not legible, mark blurry or cropped.",
     isTag
       ? "Text: transcribe ALL printed text verbatim into extractedText, line by line. For each alphanumeric code, add an entry in codes. Set purposeIdentified=true ONLY when a printed label or unambiguous context identifies what the code is (e.g. 'STYLE', 'STYLE NO', 'MODEL', 'RN', 'CA'). Use codeType 'unknown' and purposeIdentified=false when you cannot tell what a code is. Do not guess."
@@ -145,8 +150,10 @@ export async function analyzePhoto(
   imageDataUrl: string,
 ): Promise<PhotoObservation> {
   const openai = getClient();
+  // Only model profiles with documented references are compared; demo references stay out of live decisions.
+  const refs = profile.kind === "model" && profile.referenceStatus === "documented" ? step.references : [];
   const refUrls = (
-    await Promise.all(step.references.map((r) => loadReferenceDataUrl(r.imageUrl)))
+    await Promise.all(refs.map((r) => loadReferenceDataUrl(r.imageUrl)))
   ).filter((u): u is string => !!u);
 
   try {
