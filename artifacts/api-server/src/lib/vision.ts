@@ -18,15 +18,21 @@ export class VisionNotConfiguredError extends Error {
 
 export class VisionFailedError extends Error {}
 
-const MODEL = process.env["OPENAI_VISION_MODEL"] ?? "gpt-5";
+// When AI_GATEWAY_API_KEY is set, calls go through Vercel AI Gateway
+// (OpenAI-compatible; model ids are "provider/model"). Otherwise OpenAI directly.
+const GATEWAY_KEY = process.env["AI_GATEWAY_API_KEY"];
+const RAW_MODEL = process.env["OPENAI_VISION_MODEL"] ?? "gpt-5";
+const MODEL = GATEWAY_KEY && !RAW_MODEL.includes("/") ? `openai/${RAW_MODEL}` : RAW_MODEL;
 
 let client: OpenAI | null = null;
 export function visionConfigured(): boolean {
-  return !!process.env["OPENAI_API_KEY"];
+  return !!(GATEWAY_KEY || process.env["OPENAI_API_KEY"]);
 }
 function getClient(): OpenAI {
   if (!visionConfigured()) throw new VisionNotConfiguredError();
-  client ??= new OpenAI({ apiKey: process.env["OPENAI_API_KEY"] });
+  client ??= GATEWAY_KEY
+    ? new OpenAI({ apiKey: GATEWAY_KEY, baseURL: "https://ai-gateway.vercel.sh/v1" })
+    : new OpenAI({ apiKey: process.env["OPENAI_API_KEY"] });
   return client;
 }
 

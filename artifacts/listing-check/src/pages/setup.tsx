@@ -115,7 +115,7 @@ export default function Setup() {
         <span className="font-display text-2xl text-muted-foreground">$</span>
         <input inputMode="decimal" type="number" min={0} step="0.01" value={price} onChange={(e) => setPrice(e.target.value)}
           placeholder="245.00" data-testid="input-price" className="w-full bg-transparent font-display text-2xl font-bold outline-none" />
-        <span className="font-mono text-xs text-muted-foreground">USD</span>
+        <span className="shrink-0 font-mono text-xs text-muted-foreground">USD</span>
       </label>
       <p className="mt-1.5 text-xs text-muted-foreground">Shown as listing context only. Price does not affect the result.</p>
 
