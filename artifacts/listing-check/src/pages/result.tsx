@@ -178,7 +178,20 @@ export default function Result() {
           person. Quality judgments are shown as notes and never block on their own. Weight, feel, smell and price are
           not used, and these are screening signals, not verdicts.
         </p>
-        <ul className="mt-2 list-disc space-y-1 pl-5 text-xs">
+        <p className="mt-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Examples of what we look for</p>
+        <div className="mt-2 grid grid-cols-1 gap-3" data-testid="gallery-warning-examples">
+          {[
+            { src: "examples/embroidery-hologram-comparisons.jpg", caption: "Authentic vs counterfeit: counterfeit embroidery is thinner and frayed, and counterfeit holograms look dull and flat." },
+            { src: "examples/bag-pull-comparison.jpg", caption: "Leftover material around a bag pull is a visible construction warning sign." },
+            { src: "examples/handbag-photo-checklist.jpg", caption: "The close-ups that matter for bags: overall shape, brand logo, inside label, hardware engravings." },
+          ].map((ex) => (
+            <figure key={ex.src}>
+              <img src={asset(ex.src)} alt={ex.caption} loading="lazy" className="w-full rounded-xl border border-foreground/10 bg-muted object-contain" />
+              <figcaption className="mt-1 text-[11px] leading-snug text-muted-foreground">{ex.caption}</figcaption>
+            </figure>
+          ))}
+        </div>
+        <ul className="mt-3 list-disc space-y-1 pl-5 text-xs">
           <li><a className="underline" href="https://legitgrails.com" target="_blank" rel="noreferrer">LegitGrails, How to Spot Fake vs. Real Shoes</a></li>
           <li><a className="underline" href="https://vereev.com" target="_blank" rel="noreferrer">Vereev, wallet authentication photo guide</a></li>
           <li>Designer Second Hand Vienna, How to spot fake designer items: 6 signs of authenticity</li>
