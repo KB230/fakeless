@@ -42,7 +42,7 @@ export function Aura() {
           <h1 data-testid="text-headline">Catch counterfeit<br className="aura-desktop-break" /> warning signs<br /> <em>before you list.</em></h1>
           <div className="aura-hero-bottom">
             <div>
-              <p className="aura-hero-copy">Good listings start with a closer look. Record the visible details, spot discrepancies and know what still needs a second opinion.</p>
+              <p className="aura-hero-copy">$467 billion in counterfeit goods flood the global market every year, and online marketplaces are where they reach buyers. Fakeless flags the warning signs before a fake ever gets listed.</p>
               <div className="aura-actions">
                 <a className="aura-button" href="/check/new" target="_top" data-testid="link-start-check">Start a listing check <ArrowUpRight size={17} /></a>
                 <button className="aura-button secondary" onClick={() => demoRef.current?.showModal()} data-testid="link-try-demo"><Play size={13} /> Try a demo</button>
