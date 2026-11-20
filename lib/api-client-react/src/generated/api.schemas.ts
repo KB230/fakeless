@@ -254,6 +254,26 @@ export interface VisibleDifference {
   severity: VisibleDifferenceSeverity;
 }
 
+/**
+ * objective = verifiable from text or image alone (misspelling, missing tag line, contradicting text); subjective = a quality judgment (stitching looks uneven)
+ */
+export type WarningSignKind = typeof WarningSignKind[keyof typeof WarningSignKind];
+
+
+export const WarningSignKind = {
+  objective: 'objective',
+  subjective: 'subjective',
+} as const;
+
+export interface WarningSign {
+  /** Which warning sign from the step's checklist this is (e.g. "Misspelled brand name") */
+  indicator: string;
+  /** What is visible in the photo that matches the warning sign */
+  observed: string;
+  /** objective = verifiable from text or image alone (misspelling, missing tag line, contradicting text); subjective = a quality judgment (stitching looks uneven) */
+  kind: WarningSignKind;
+}
+
 export interface PhotoObservation {
   quality: PhotoQuality;
   /** Raw text read from the photo, verbatim */
@@ -265,6 +285,8 @@ export interface PhotoObservation {
   /** @nullable */
   uncertaintyNote: string | null;
   summary: string;
+  /** Visible counterfeit warning signs from the step's checklist. Screening signals, not verdicts. */
+  warningSigns?: WarningSign[];
 }
 
 export interface CheckPhoto {
@@ -292,6 +314,8 @@ export const DecisionReasonCode = {
   construction_difference: 'construction_difference',
   reference_insufficient: 'reference_insufficient',
   comparison_unreliable: 'comparison_unreliable',
+  warning_sign: 'warning_sign',
+  label_mismatch: 'label_mismatch',
 } as const;
 
 export interface DecisionReason {
@@ -342,6 +366,8 @@ export interface StepSummary {
   stepId: StepId;
   status: StepSummaryStatus;
   note: string;
+  /** Warning signs seen in this step's photo (objective and subjective) */
+  warningSigns?: WarningSign[];
 }
 
 export type CheckDecisionOutcome = typeof CheckDecisionOutcome[keyof typeof CheckDecisionOutcome];

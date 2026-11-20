@@ -9,6 +9,7 @@ import type {
   ScreeningTier,
   StepSummary,
   WashTagComparison,
+  WarningSign,
 } from "@workspace/api-zod";
 import { retakeMessage, retakeVoicePromptId, type RetakeKind } from "../config/voicePrompts";
 
@@ -188,6 +189,9 @@ export function decide(input: RulesInput): CheckDecision {
 
   const washTag = modelTier ? compareCodes(input, retakes, reasons, steps) : null;
 
+  applyWarningSigns(input, reasons, steps);
+  crossCheckLabels(input, reasons, steps);
+
   let outcome: CheckDecision["outcome"];
   let headline: string;
   if (retakes.length > 0) {
@@ -297,5 +301,98 @@ function markStep(steps: StepSummary[], stepId: string, status: StepSummary["sta
   if (s) {
     s.status = status;
     s.note = note;
+  }
+}
+
+/**
+ * Counterfeit warning signs reported by the vision model (or demo
+ * observations) for usable photos. Objective signs (a misspelled brand word,
+ * a required tag line clearly absent, contradicting printed text) send the
+ * listing to manual review. Subjective signs (stitching looks uneven,
+ * embroidery looks thin) never block on their own; they are shown to the
+ * seller and reviewer as "things to look at". Applies to every tier.
+ */
+function applyWarningSigns(input: RulesInput, reasons: DecisionReason[], steps: StepSummary[]) {
+  const { profile, observations } = input;
+  for (const step of profile.steps) {
+    const obs = observations[step.id];
+    const summary = steps.find((s) => s.stepId === step.id);
+    if (!obs || !obs.quality.usable || !summary || summary.status === "retake" || summary.status === "skipped") continue;
+    const signs: WarningSign[] = obs.warningSigns ?? [];
+    if (signs.length === 0) continue;
+    summary.warningSigns = signs;
+    const objective = signs.filter((w) => w.kind === "objective");
+    for (const w of objective) {
+      reasons.push({
+        code: "warning_sign",
+        stepId: step.id,
+        message: `${step.title}: ${w.indicator}. ${w.observed}`,
+      });
+    }
+    if (objective.length > 0) {
+      summary.status = "review";
+      summary.note = `${objective.length} clear warning sign${objective.length > 1 ? "s" : ""} visible.`;
+    } else if (summary.status === "ok") {
+      summary.note = `${summary.note} ${signs.length} thing${signs.length > 1 ? "s" : ""} a reviewer may want to look at.`;
+    }
+  }
+}
+
+/**
+ * Cross-photo checks: two labels on the same item must agree. Server-side
+ * config keyed by profile id; values are compared as strings only when both
+ * photos are usable and the value is clearly readable on both.
+ */
+const LABEL_CROSS_CHECKS: Record<string, { a: string; b: string; label: string }[]> = {
+  "category-sneakers": [{ a: "box_label", b: "size_tag", label: "box label and size tag" }],
+};
+
+const US_SIZE = /\bUS\s*(?:M(?:EN'?S)?\s*)?(\d{1,2}(?:\.5)?)\b/i;
+
+function readUsSize(text: string): string | null {
+  const m = text.match(US_SIZE);
+  return m ? m[1]! : null;
+}
+
+function labeledStyleCodes(obs: PhotoObservation): string[] {
+  return obs.codes
+    .filter((c) => c.purposeIdentified && COMPARABLE_CODE_TYPES.has(c.codeType))
+    .map((c) => c.value);
+}
+
+function crossCheckLabels(input: RulesInput, reasons: DecisionReason[], steps: StepSummary[]) {
+  const { profile, observations, presence } = input;
+  for (const cc of LABEL_CROSS_CHECKS[profile.id] ?? []) {
+    const stepA = profile.steps.find((s) => s.id === cc.a);
+    const stepB = profile.steps.find((s) => s.id === cc.b);
+    if (!stepA || !stepB) continue;
+    if ((stepA.presenceQuestionId && presence[stepA.presenceQuestionId] === false) ||
+        (stepB.presenceQuestionId && presence[stepB.presenceQuestionId] === false)) continue;
+    const a = observations[cc.a];
+    const b = observations[cc.b];
+    if (!a?.quality.usable || !b?.quality.usable) continue;
+
+    const mismatches: string[] = [];
+    const sizeA = readUsSize(a.extractedText);
+    const sizeB = readUsSize(b.extractedText);
+    if (sizeA && sizeB && sizeA !== sizeB) mismatches.push(`size (US ${sizeA} vs US ${sizeB})`);
+
+    const codesA = labeledStyleCodes(a);
+    const codesB = labeledStyleCodes(b);
+    if (codesA.length > 0 && codesB.length > 0) {
+      const normB = new Set(codesB.map(normalizeCode));
+      if (!codesA.some((c) => normB.has(normalizeCode(c)))) {
+        mismatches.push(`style code ("${codesA[0]}" vs "${codesB[0]}")`);
+      }
+    }
+    if (mismatches.length === 0) continue;
+
+    reasons.push({
+      code: "label_mismatch",
+      stepId: cc.b,
+      message: `The ${cc.label} show a different ${mismatches.join(" and ")}. On a genuine item these normally match.`,
+    });
+    markStep(steps, cc.a, "review", `Doesn't match the ${stepB.title.toLowerCase()}: ${mismatches.join(", ")}.`);
+    markStep(steps, cc.b, "review", `Doesn't match the ${stepA.title.toLowerCase()}: ${mismatches.join(", ")}.`);
   }
 }

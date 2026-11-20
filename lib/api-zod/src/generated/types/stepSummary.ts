@@ -7,9 +7,12 @@
  */
 import type { StepId } from './stepId';
 import type { StepSummaryStatus } from './stepSummaryStatus';
+import type { WarningSign } from './warningSign';
 
 export interface StepSummary {
   stepId: StepId;
   status: StepSummaryStatus;
   note: string;
+  /** Warning signs seen in this step's photo (objective and subjective) */
+  warningSigns?: WarningSign[];
 }

@@ -186,7 +186,7 @@ export const CreateCheckResponse = zod.object({
   "tier": zod.enum(['model_specific', 'category_checklist', 'basic_photo']),
   "headline": zod.string(),
   "reasons": zod.array(zod.object({
-  "code": zod.enum(['missing_photo', 'unusable_photo', 'code_mismatch', 'code_type_uncertain', 'code_not_found', 'tag_absent', 'construction_difference', 'reference_insufficient', 'comparison_unreliable']),
+  "code": zod.enum(['missing_photo', 'unusable_photo', 'code_mismatch', 'code_type_uncertain', 'code_not_found', 'tag_absent', 'construction_difference', 'reference_insufficient', 'comparison_unreliable', 'warning_sign', 'label_mismatch']),
   "stepId": zod.union([zod.string().describe('Step id, unique within a profile (e.g. logo, wash_tag_front, size_tag)'),zod.null()]),
   "message": zod.string()
 })),
@@ -205,7 +205,12 @@ export const CreateCheckResponse = zod.object({
   "steps": zod.array(zod.object({
   "stepId": zod.string().describe('Step id, unique within a profile (e.g. logo, wash_tag_front, size_tag)'),
   "status": zod.enum(['ok', 'retake', 'review', 'missing', 'skipped']),
-  "note": zod.string()
+  "note": zod.string(),
+  "warningSigns": zod.array(zod.object({
+  "indicator": zod.string().describe('Which warning sign from the step\'s checklist this is (e.g. \"Misspelled brand name\")'),
+  "observed": zod.string().describe('What is visible in the photo that matches the warning sign'),
+  "kind": zod.enum(['objective', 'subjective']).describe('objective = verifiable from text or image alone (misspelling, missing tag line, contradicting text); subjective = a quality judgment (stitching looks uneven)')
+})).optional().describe('Warning signs seen in this step\'s photo (objective and subjective)')
 })),
   "decidedAt": zod.coerce.date(),
   "disclaimer": zod.string()
@@ -235,7 +240,12 @@ export const CreateCheckResponse = zod.object({
 })),
   "comparisonReliable": zod.boolean(),
   "uncertaintyNote": zod.string().nullable(),
-  "summary": zod.string()
+  "summary": zod.string(),
+  "warningSigns": zod.array(zod.object({
+  "indicator": zod.string().describe('Which warning sign from the step\'s checklist this is (e.g. \"Misspelled brand name\")'),
+  "observed": zod.string().describe('What is visible in the photo that matches the warning sign'),
+  "kind": zod.enum(['objective', 'subjective']).describe('objective = verifiable from text or image alone (misspelling, missing tag line, contradicting text); subjective = a quality judgment (stitching looks uneven)')
+})).optional().describe('Visible counterfeit warning signs from the step\'s checklist. Screening signals, not verdicts.')
 }),
   "createdAt": zod.coerce.date()
 })),
@@ -267,7 +277,7 @@ export const GetCheckResponse = zod.object({
   "tier": zod.enum(['model_specific', 'category_checklist', 'basic_photo']),
   "headline": zod.string(),
   "reasons": zod.array(zod.object({
-  "code": zod.enum(['missing_photo', 'unusable_photo', 'code_mismatch', 'code_type_uncertain', 'code_not_found', 'tag_absent', 'construction_difference', 'reference_insufficient', 'comparison_unreliable']),
+  "code": zod.enum(['missing_photo', 'unusable_photo', 'code_mismatch', 'code_type_uncertain', 'code_not_found', 'tag_absent', 'construction_difference', 'reference_insufficient', 'comparison_unreliable', 'warning_sign', 'label_mismatch']),
   "stepId": zod.union([zod.string().describe('Step id, unique within a profile (e.g. logo, wash_tag_front, size_tag)'),zod.null()]),
   "message": zod.string()
 })),
@@ -286,7 +296,12 @@ export const GetCheckResponse = zod.object({
   "steps": zod.array(zod.object({
   "stepId": zod.string().describe('Step id, unique within a profile (e.g. logo, wash_tag_front, size_tag)'),
   "status": zod.enum(['ok', 'retake', 'review', 'missing', 'skipped']),
-  "note": zod.string()
+  "note": zod.string(),
+  "warningSigns": zod.array(zod.object({
+  "indicator": zod.string().describe('Which warning sign from the step\'s checklist this is (e.g. \"Misspelled brand name\")'),
+  "observed": zod.string().describe('What is visible in the photo that matches the warning sign'),
+  "kind": zod.enum(['objective', 'subjective']).describe('objective = verifiable from text or image alone (misspelling, missing tag line, contradicting text); subjective = a quality judgment (stitching looks uneven)')
+})).optional().describe('Warning signs seen in this step\'s photo (objective and subjective)')
 })),
   "decidedAt": zod.coerce.date(),
   "disclaimer": zod.string()
@@ -316,7 +331,12 @@ export const GetCheckResponse = zod.object({
 })),
   "comparisonReliable": zod.boolean(),
   "uncertaintyNote": zod.string().nullable(),
-  "summary": zod.string()
+  "summary": zod.string(),
+  "warningSigns": zod.array(zod.object({
+  "indicator": zod.string().describe('Which warning sign from the step\'s checklist this is (e.g. \"Misspelled brand name\")'),
+  "observed": zod.string().describe('What is visible in the photo that matches the warning sign'),
+  "kind": zod.enum(['objective', 'subjective']).describe('objective = verifiable from text or image alone (misspelling, missing tag line, contradicting text); subjective = a quality judgment (stitching looks uneven)')
+})).optional().describe('Visible counterfeit warning signs from the step\'s checklist. Screening signals, not verdicts.')
 }),
   "createdAt": zod.coerce.date()
 })),
@@ -363,7 +383,12 @@ export const UploadCheckPhotoResponse = zod.object({
 })),
   "comparisonReliable": zod.boolean(),
   "uncertaintyNote": zod.string().nullable(),
-  "summary": zod.string()
+  "summary": zod.string(),
+  "warningSigns": zod.array(zod.object({
+  "indicator": zod.string().describe('Which warning sign from the step\'s checklist this is (e.g. \"Misspelled brand name\")'),
+  "observed": zod.string().describe('What is visible in the photo that matches the warning sign'),
+  "kind": zod.enum(['objective', 'subjective']).describe('objective = verifiable from text or image alone (misspelling, missing tag line, contradicting text); subjective = a quality judgment (stitching looks uneven)')
+})).optional().describe('Visible counterfeit warning signs from the step\'s checklist. Screening signals, not verdicts.')
 }),
   "createdAt": zod.coerce.date()
 })
@@ -399,7 +424,7 @@ export const SetDetailPresenceResponse = zod.object({
   "tier": zod.enum(['model_specific', 'category_checklist', 'basic_photo']),
   "headline": zod.string(),
   "reasons": zod.array(zod.object({
-  "code": zod.enum(['missing_photo', 'unusable_photo', 'code_mismatch', 'code_type_uncertain', 'code_not_found', 'tag_absent', 'construction_difference', 'reference_insufficient', 'comparison_unreliable']),
+  "code": zod.enum(['missing_photo', 'unusable_photo', 'code_mismatch', 'code_type_uncertain', 'code_not_found', 'tag_absent', 'construction_difference', 'reference_insufficient', 'comparison_unreliable', 'warning_sign', 'label_mismatch']),
   "stepId": zod.union([zod.string().describe('Step id, unique within a profile (e.g. logo, wash_tag_front, size_tag)'),zod.null()]),
   "message": zod.string()
 })),
@@ -418,7 +443,12 @@ export const SetDetailPresenceResponse = zod.object({
   "steps": zod.array(zod.object({
   "stepId": zod.string().describe('Step id, unique within a profile (e.g. logo, wash_tag_front, size_tag)'),
   "status": zod.enum(['ok', 'retake', 'review', 'missing', 'skipped']),
-  "note": zod.string()
+  "note": zod.string(),
+  "warningSigns": zod.array(zod.object({
+  "indicator": zod.string().describe('Which warning sign from the step\'s checklist this is (e.g. \"Misspelled brand name\")'),
+  "observed": zod.string().describe('What is visible in the photo that matches the warning sign'),
+  "kind": zod.enum(['objective', 'subjective']).describe('objective = verifiable from text or image alone (misspelling, missing tag line, contradicting text); subjective = a quality judgment (stitching looks uneven)')
+})).optional().describe('Warning signs seen in this step\'s photo (objective and subjective)')
 })),
   "decidedAt": zod.coerce.date(),
   "disclaimer": zod.string()
@@ -448,7 +478,12 @@ export const SetDetailPresenceResponse = zod.object({
 })),
   "comparisonReliable": zod.boolean(),
   "uncertaintyNote": zod.string().nullable(),
-  "summary": zod.string()
+  "summary": zod.string(),
+  "warningSigns": zod.array(zod.object({
+  "indicator": zod.string().describe('Which warning sign from the step\'s checklist this is (e.g. \"Misspelled brand name\")'),
+  "observed": zod.string().describe('What is visible in the photo that matches the warning sign'),
+  "kind": zod.enum(['objective', 'subjective']).describe('objective = verifiable from text or image alone (misspelling, missing tag line, contradicting text); subjective = a quality judgment (stitching looks uneven)')
+})).optional().describe('Visible counterfeit warning signs from the step\'s checklist. Screening signals, not verdicts.')
 }),
   "createdAt": zod.coerce.date()
 })),
@@ -483,7 +518,7 @@ export const EvaluateCheckResponse = zod.object({
   "tier": zod.enum(['model_specific', 'category_checklist', 'basic_photo']),
   "headline": zod.string(),
   "reasons": zod.array(zod.object({
-  "code": zod.enum(['missing_photo', 'unusable_photo', 'code_mismatch', 'code_type_uncertain', 'code_not_found', 'tag_absent', 'construction_difference', 'reference_insufficient', 'comparison_unreliable']),
+  "code": zod.enum(['missing_photo', 'unusable_photo', 'code_mismatch', 'code_type_uncertain', 'code_not_found', 'tag_absent', 'construction_difference', 'reference_insufficient', 'comparison_unreliable', 'warning_sign', 'label_mismatch']),
   "stepId": zod.union([zod.string().describe('Step id, unique within a profile (e.g. logo, wash_tag_front, size_tag)'),zod.null()]),
   "message": zod.string()
 })),
@@ -502,7 +537,12 @@ export const EvaluateCheckResponse = zod.object({
   "steps": zod.array(zod.object({
   "stepId": zod.string().describe('Step id, unique within a profile (e.g. logo, wash_tag_front, size_tag)'),
   "status": zod.enum(['ok', 'retake', 'review', 'missing', 'skipped']),
-  "note": zod.string()
+  "note": zod.string(),
+  "warningSigns": zod.array(zod.object({
+  "indicator": zod.string().describe('Which warning sign from the step\'s checklist this is (e.g. \"Misspelled brand name\")'),
+  "observed": zod.string().describe('What is visible in the photo that matches the warning sign'),
+  "kind": zod.enum(['objective', 'subjective']).describe('objective = verifiable from text or image alone (misspelling, missing tag line, contradicting text); subjective = a quality judgment (stitching looks uneven)')
+})).optional().describe('Warning signs seen in this step\'s photo (objective and subjective)')
 })),
   "decidedAt": zod.coerce.date(),
   "disclaimer": zod.string()
@@ -532,7 +572,12 @@ export const EvaluateCheckResponse = zod.object({
 })),
   "comparisonReliable": zod.boolean(),
   "uncertaintyNote": zod.string().nullable(),
-  "summary": zod.string()
+  "summary": zod.string(),
+  "warningSigns": zod.array(zod.object({
+  "indicator": zod.string().describe('Which warning sign from the step\'s checklist this is (e.g. \"Misspelled brand name\")'),
+  "observed": zod.string().describe('What is visible in the photo that matches the warning sign'),
+  "kind": zod.enum(['objective', 'subjective']).describe('objective = verifiable from text or image alone (misspelling, missing tag line, contradicting text); subjective = a quality judgment (stitching looks uneven)')
+})).optional().describe('Visible counterfeit warning signs from the step\'s checklist. Screening signals, not verdicts.')
 }),
   "createdAt": zod.coerce.date()
 })),
@@ -625,7 +670,7 @@ export const RunDemoCaseResponse = zod.object({
   "tier": zod.enum(['model_specific', 'category_checklist', 'basic_photo']),
   "headline": zod.string(),
   "reasons": zod.array(zod.object({
-  "code": zod.enum(['missing_photo', 'unusable_photo', 'code_mismatch', 'code_type_uncertain', 'code_not_found', 'tag_absent', 'construction_difference', 'reference_insufficient', 'comparison_unreliable']),
+  "code": zod.enum(['missing_photo', 'unusable_photo', 'code_mismatch', 'code_type_uncertain', 'code_not_found', 'tag_absent', 'construction_difference', 'reference_insufficient', 'comparison_unreliable', 'warning_sign', 'label_mismatch']),
   "stepId": zod.union([zod.string().describe('Step id, unique within a profile (e.g. logo, wash_tag_front, size_tag)'),zod.null()]),
   "message": zod.string()
 })),
@@ -644,7 +689,12 @@ export const RunDemoCaseResponse = zod.object({
   "steps": zod.array(zod.object({
   "stepId": zod.string().describe('Step id, unique within a profile (e.g. logo, wash_tag_front, size_tag)'),
   "status": zod.enum(['ok', 'retake', 'review', 'missing', 'skipped']),
-  "note": zod.string()
+  "note": zod.string(),
+  "warningSigns": zod.array(zod.object({
+  "indicator": zod.string().describe('Which warning sign from the step\'s checklist this is (e.g. \"Misspelled brand name\")'),
+  "observed": zod.string().describe('What is visible in the photo that matches the warning sign'),
+  "kind": zod.enum(['objective', 'subjective']).describe('objective = verifiable from text or image alone (misspelling, missing tag line, contradicting text); subjective = a quality judgment (stitching looks uneven)')
+})).optional().describe('Warning signs seen in this step\'s photo (objective and subjective)')
 })),
   "decidedAt": zod.coerce.date(),
   "disclaimer": zod.string()
@@ -674,7 +724,12 @@ export const RunDemoCaseResponse = zod.object({
 })),
   "comparisonReliable": zod.boolean(),
   "uncertaintyNote": zod.string().nullable(),
-  "summary": zod.string()
+  "summary": zod.string(),
+  "warningSigns": zod.array(zod.object({
+  "indicator": zod.string().describe('Which warning sign from the step\'s checklist this is (e.g. \"Misspelled brand name\")'),
+  "observed": zod.string().describe('What is visible in the photo that matches the warning sign'),
+  "kind": zod.enum(['objective', 'subjective']).describe('objective = verifiable from text or image alone (misspelling, missing tag line, contradicting text); subjective = a quality judgment (stitching looks uneven)')
+})).optional().describe('Visible counterfeit warning signs from the step\'s checklist. Screening signals, not verdicts.')
 }),
   "createdAt": zod.coerce.date()
 })),

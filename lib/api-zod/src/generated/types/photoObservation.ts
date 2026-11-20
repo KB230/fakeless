@@ -8,6 +8,7 @@
 import type { ObservedCode } from './observedCode';
 import type { PhotoQuality } from './photoQuality';
 import type { VisibleDifference } from './visibleDifference';
+import type { WarningSign } from './warningSign';
 
 export interface PhotoObservation {
   quality: PhotoQuality;
@@ -20,4 +21,6 @@ export interface PhotoObservation {
   /** @nullable */
   uncertaintyNote: string | null;
   summary: string;
+  /** Visible counterfeit warning signs from the step's checklist. Screening signals, not verdicts. */
+  warningSigns?: WarningSign[];
 }

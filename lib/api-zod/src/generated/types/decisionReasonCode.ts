@@ -19,4 +19,6 @@ export const DecisionReasonCode = {
   construction_difference: 'construction_difference',
   reference_insufficient: 'reference_insufficient',
   comparison_unreliable: 'comparison_unreliable',
+  warning_sign: 'warning_sign',
+  label_mismatch: 'label_mismatch',
 } as const;

@@ -53,5 +53,7 @@ export * from './visibleDifference';
 export * from './visibleDifferenceSeverity';
 export * from './voicePrompt';
 export * from './voiceStatus';
+export * from './warningSign';
+export * from './warningSignKind';
 export * from './washTagComparison';
 export * from './washTagComparisonResult';

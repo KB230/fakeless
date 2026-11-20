@@ -136,6 +136,22 @@ export default function Result() {
                 <span className={`rounded-full px-2.5 py-0.5 font-mono text-[11px] font-semibold ${STEP_STATUS[s.status]}`}>{s.status}</span>
               </div>
               <p className="mt-1 text-sm text-muted-foreground">{s.note}</p>
+              {s.warningSigns && s.warningSigns.length > 0 && (
+                <ul className="mt-2 space-y-1.5" data-testid={`list-warning-signs-${s.stepId}`}>
+                  {s.warningSigns.map((w, i) => (
+                    <li key={i} className={`rounded-lg border p-2.5 text-xs ${w.kind === "objective" ? "border-[hsl(250_48%_44%)]/40 bg-[hsl(248_50%_95%)]" : "border-foreground/10 bg-muted"}`}>
+                      <span className="font-mono text-[10px] font-semibold uppercase tracking-wider">
+                        {w.kind === "objective" ? "Clear warning sign" : "Reviewer may want to look"}
+                      </span>
+                      <p className="mt-0.5 font-semibold">{w.indicator}</p>
+                      <p className="text-muted-foreground">{w.observed}</p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {(!s.warningSigns || s.warningSigns.length === 0) && s.status === "ok" && (
+                <p className="mt-1 text-xs text-muted-foreground">No visible warning signs in this photo.</p>
+              )}
               {c.photos.find(p => p.stepId === s.stepId)?.observation && (() => {
                 const obs = c.photos.find(p => p.stepId === s.stepId)!.observation;
                 return <div className="mt-3 space-y-2 text-sm">
@@ -152,6 +168,22 @@ export default function Result() {
           ))}
         </div>
       </section>
+
+      <details className="mt-6 rounded-2xl border border-foreground/10 bg-card p-4 text-sm" data-testid="panel-how-we-check">
+        <summary className="cursor-pointer font-semibold">How we choose what to check</summary>
+        <p className="mt-2 text-muted-foreground">
+          Each photo step looks for warning signs adapted from public authentication guides: stitching, logo and font
+          consistency, tag printing, hardware engraving, and labels that should agree with each other. Clear,
+          checkable signs (a misspelled brand word, a size tag that contradicts the box label) send a listing to a
+          person. Quality judgments are shown as notes and never block on their own. Weight, feel, smell and price are
+          not used, and these are screening signals, not verdicts.
+        </p>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-xs">
+          <li><a className="underline" href="https://legitgrails.com" target="_blank" rel="noreferrer">LegitGrails, How to Spot Fake vs. Real Shoes</a></li>
+          <li><a className="underline" href="https://vereev.com" target="_blank" rel="noreferrer">Vereev, wallet authentication photo guide</a></li>
+          <li>Designer Second Hand Vienna, How to spot fake designer items: 6 signs of authenticity</li>
+        </ul>
+      </details>
 
       <PublishBlock check={c} />
 

@@ -31,6 +31,7 @@ const categoryObs = (o: {
   codes?: PhotoObservation["codes"];
   details: string[];
   summary: string;
+  warningSigns?: PhotoObservation["warningSigns"];
 }): PhotoObservation => ({
   quality: { usable: true, issues: [], note: o.note },
   extractedText: o.text ?? "",
@@ -40,6 +41,7 @@ const categoryObs = (o: {
   comparisonReliable: false,
   uncertaintyNote: "Category check: no model reference.",
   summary: o.summary,
+  warningSigns: o.warningSigns ?? [],
 });
 
 const sneakerTier = resolveTier("sneakers");
@@ -319,6 +321,89 @@ export const DEMO_CASES: DemoCaseDef[] = [
           note: "Individual stitches sharp.",
           details: ["Even stitch spacing along the toe cap", "No loose threads visible"],
           summary: "Stitching is clearly visible.",
+        }),
+      },
+    },
+  },
+  {
+    id: "sneakers-label-mismatch",
+    title: "Sneakers, labels don't match",
+    description:
+      "Every photo is clear, but the box label and the size tag inside the shoe show a different size and style code. On a genuine pair these normally match, so the listing goes to a person before it can be published.",
+    expectedOutcome: "manual_review",
+    tier: "category_checklist",
+    categoryId: "sneakers",
+    tierNote: sneakerTier.note,
+    profileId: sneakerTier.profileId,
+    condition: "new_with_tags",
+    askingPrice: 95,
+    presence: { size_tag: true, box_label: true },
+    photos: {
+      side_profile: {
+        imageUrl: "demo/sneakers-side.jpg",
+        observation: categoryObs({
+          note: "Both shoes in frame, toe to heel.",
+          details: ["White and grey low-top pair", "Leather upper with grey overlays"],
+          summary: "Both shoes are fully visible from the side.",
+        }),
+      },
+      box_label: {
+        imageUrl: "demo/sneakers-box-label.jpg",
+        observation: categoryObs({
+          note: "Label flat and sharp.",
+          text: "STRIDEWORK\nSAMPLE LABEL\nSTYLE: SW-SAMPLE-0001\nSIZE US 10 / EU 44\nCOLOR: WHITE/GREY",
+          codes: [{ value: "SW-SAMPLE-0001", codeType: "style_code", purposeIdentified: true, confidence: "high" }],
+          details: ["Printed label with barcode", "Size and colour lines"],
+          summary: "Box label is readable: style SW-SAMPLE-0001, US 10.",
+        }),
+      },
+      size_tag: {
+        imageUrl: "demo/sneakers-size-tag.jpg",
+        observation: categoryObs({
+          note: "Tag straight on, every character legible.",
+          text: "STRIDEWORK\nUS 9  UK 8  EU 42.5  CM 27\nMADE IN VIETNAM\nSTYLE SW-SAMPLE-0417",
+          codes: [{ value: "SW-SAMPLE-0417", codeType: "style_code", purposeIdentified: true, confidence: "high" }],
+          details: ["Sewn tag inside the tongue", "Size in four systems", "Line labeled STYLE"],
+          summary: "Size tag is readable: style SW-SAMPLE-0417, US 9.",
+        }),
+      },
+      insole: {
+        imageUrl: "demo/sneakers-insole.jpg",
+        observation: categoryObs({
+          note: "Insole visible from above, logo in focus.",
+          text: "STRIDEWORK",
+          details: ["Printed wordmark on the heel area of the insole"],
+          summary: "Insole and printed wordmark are visible.",
+        }),
+      },
+      outsole: {
+        imageUrl: "demo/sneakers-outsole.jpg",
+        observation: categoryObs({
+          note: "Whole sole in frame.",
+          details: ["Grey rubber outsole", "Herringbone tread pattern"],
+          summary: "The whole outsole is visible.",
+          warningSigns: [
+            {
+              indicator: "Excess rubber or glue around the sole edge",
+              observed: "A thin line of glue is visible where the midsole meets the upper near the toe.",
+              kind: "subjective",
+            },
+          ],
+        }),
+      },
+      stitching: {
+        imageUrl: "demo/sneakers-stitching.jpg",
+        observation: categoryObs({
+          note: "Individual stitches sharp.",
+          details: ["Stitching along the toe cap"],
+          summary: "Stitching is clearly visible.",
+          warningSigns: [
+            {
+              indicator: "Uneven stitch length or spacing",
+              observed: "Stitches along the toe cap vary in length, with two noticeably longer stitches near the edge.",
+              kind: "subjective",
+            },
+          ],
         }),
       },
     },

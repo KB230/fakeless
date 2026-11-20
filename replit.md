@@ -33,7 +33,8 @@ Mobile-first counterfeit screening step for clothing resellers: before publishin
 
 - Home with EUIPO 2022 statistic, "Start a listing check" and "Try a demo"
 - Seller flow: profile + condition + price → logo → wash tag question/front/back → zipper → seam tape → result
-- Demo: three no-upload cases (pass+mock publish, blurry tag retake, style-code mismatch review)
+- Demo: no-upload cases (pass+mock publish, blurry tag retake, style-code mismatch review, basic screening, sneakers category check, sneakers label mismatch)
+- Warning signs: each category step has brand-agnostic `comparisonFocus` warning signs (stitching, logo/font, tag print, hardware, embroidery, holograms) in `config/profiles/categories.ts`. The vision model returns `warningSigns` tagged objective/subjective. Objective signs → manual review; subjective signs are shown to the reviewer but never block. Sneakers also cross-check box label vs size tag (US size + labeled style code) in `rules.ts`.
 
 ## Gotchas
 

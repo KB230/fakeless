@@ -566,6 +566,20 @@ components:
         severity:
           type: string
           enum: [minor, meaningful]
+    WarningSign:
+      type: object
+      required: [indicator, observed, kind]
+      properties:
+        indicator:
+          type: string
+          description: Which warning sign from the step's checklist this is (e.g. "Misspelled brand name")
+        observed:
+          type: string
+          description: What is visible in the photo that matches the warning sign
+        kind:
+          type: string
+          enum: [objective, subjective]
+          description: objective = verifiable from text or image alone (misspelling, missing tag line, contradicting text); subjective = a quality judgment (stitching looks uneven)
     PhotoObservation:
       type: object
       required: [quality, extractedText, codes, visibleDetails, differences, comparisonReliable, uncertaintyNote, summary]
@@ -586,6 +600,10 @@ components:
         comparisonReliable: { type: boolean }
         uncertaintyNote: { type: ["string", "null"] }
         summary: { type: string }
+        warningSigns:
+          type: array
+          description: Visible counterfeit warning signs from the step's checklist. Screening signals, not verdicts.
+          items: { $ref: "#/components/schemas/WarningSign" }
     CheckPhoto:
       type: object
       required: [id, stepId, imageUrl, observation, createdAt]
@@ -604,7 +622,7 @@ components:
       properties:
         code:
           type: string
-          enum: [missing_photo, unusable_photo, code_mismatch, code_type_uncertain, code_not_found, tag_absent, construction_difference, reference_insufficient, comparison_unreliable]
+          enum: [missing_photo, unusable_photo, code_mismatch, code_type_uncertain, code_not_found, tag_absent, construction_difference, reference_insufficient, comparison_unreliable, warning_sign, label_mismatch]
         stepId:
           oneOf:
             - $ref: "#/components/schemas/StepId"
@@ -639,6 +657,10 @@ components:
           type: string
           enum: [ok, retake, review, missing, skipped]
         note: { type: string }
+        warningSigns:
+          type: array
+          description: Warning signs seen in this step's photo (objective and subjective)
+          items: { $ref: "#/components/schemas/WarningSign" }
     CheckDecision:
       type: object
       required: [outcome, tier, headline, reasons, retakes, washTag, steps, decidedAt, disclaimer]
