@@ -8,7 +8,7 @@ import {
   useGetProfile,
   getGetProfileQueryKey,
   useUploadCheckPhoto,
-  useSetWashTagPresence,
+  useSetDetailPresence,
   useEvaluateCheck,
   type InspectionStep,
   type CheckPhoto,
@@ -277,8 +277,8 @@ function Observation({ obs, isTag }: { obs: CheckPhoto["observation"]; isTag: bo
 }
 
 function WashQuestion({ check, profile, onDone, onBack }: { check: Check; profile: ProductProfile; onDone: () => void; onBack?: () => void }) {
-  const set = useSetWashTagPresence();
-  const answer = (present: boolean) => set.mutate({ checkId: check.id, data: { present } }, { onSuccess: onDone });
+  const set = useSetDetailPresence();
+  const answer = (present: boolean) => set.mutate({ checkId: check.id, data: { questionId: "wash_tag", present } }, { onSuccess: onDone });
   return (
     <div>
       <Eyebrow>Question</Eyebrow>

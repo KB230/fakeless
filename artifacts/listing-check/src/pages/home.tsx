@@ -27,8 +27,18 @@ export default function Home() {
           Catch counterfeit warning signs before you list.
         </h1>
         <p className="mt-4 text-[15px] text-muted-foreground">
-          Four photos. Logo, wash tag, zipper, seam tape. Each is compared against a reference for the exact jacket you are selling.
+          An estimated $467 billion in counterfeit goods crossed borders worldwide in 2021. Online marketplaces are one route to buyers. Fakeless helps marketplaces flag warning signs before an item gets listed.
         </p>
+        <a
+          href="https://www.oecd.org/en/publications/mapping-global-trade-in-fakes-2025_94d3b29f-en.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2 inline-flex items-center gap-1.5 text-xs text-muted-foreground underline underline-offset-4"
+          data-testid="link-source-counterfeit-trade"
+        >
+          Source: OECD–EUIPO, Mapping Global Trade in Fakes 2025 (2021 estimate)
+          <ExternalLink className="h-3 w-3 shrink-0" />
+        </a>
       </section>
 
       <section className="rise mt-6 overflow-hidden rounded-3xl bg-secondary text-secondary-foreground" style={{ animationDelay: ".08s" }}>
