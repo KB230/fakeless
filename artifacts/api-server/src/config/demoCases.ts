@@ -540,6 +540,69 @@ export const DEMO_CASES: DemoCaseDef[] = [
       },
     },
   },
+  {
+    id: "tnf-nuptse-counterfeit",
+    title: "North Face Nuptse, counterfeit signs",
+    description:
+      "A Nuptse puffer checked against photos of an authentic jacket. The chest logo, inside down label and hang tag all differ from the authentic references.",
+    expectedOutcome: "manual_review",
+    tier: "model_specific",
+    categoryId: "outerwear",
+    tierNote: resolveTier("outerwear", "tnf-nuptse").note,
+    profileId: "tnf-nuptse",
+    condition: "like_new",
+    askingPrice: 60,
+    presence: { hang_tag: true, down_label: true },
+    photos: {
+      chest_logo: {
+        imageUrl: "demo/tnf/chest-logo-counterfeit.jpg",
+        observation: modelObs({
+          note: "Logo fills the frame, sharp.",
+          text: "THE\nNORTH\nFACE",
+          details: ["Embroidered logo with half-dome"],
+          differences: [
+            { feature: "Text alignment", description: "THE, NORTH and FACE don't line up on the left edge the way they do on the authentic logo.", severity: "meaningful" },
+            { feature: "Embroidery", description: "Letters are puffier with rounder edges, and the dome segments sit at different spacing than the reference.", severity: "meaningful" },
+          ],
+          summary: "Chest logo alignment and embroidery differ from the authentic jacket.",
+        }),
+      },
+      zipper: {
+        imageUrl: "demo/zipper.jpg",
+        observation: modelObs({
+          note: "Pull in frame.",
+          details: ["Metal zipper pull"],
+          summary: "Zipper pull is visible; no warning signs from this photo.",
+        }),
+      },
+      down_label: {
+        imageUrl: "demo/tnf/down-label-counterfeit.jpg",
+        observation: modelObs({
+          note: "Label flat and legible.",
+          text: "RDS CU 843098\nDL#HRD2019TNF-0003\nThe North Face",
+          codes: [{ value: "HRD2019TNF-0003", codeType: "unknown", purposeIdentified: false, confidence: "high" }],
+          details: ["Small white printed label"],
+          differences: [
+            { feature: "Print", description: "Text is thinner and grey rather than the bold black of the authentic label.", severity: "meaningful" },
+            { feature: "DL# line", description: "The DL# line is a long brand-style code (HRD2019TNF-0003) instead of the short lot code on the authentic label.", severity: "meaningful" },
+          ],
+          summary: "Label print and the DL# code format differ from the authentic label.",
+        }),
+      },
+      hang_tag: {
+        imageUrl: "demo/tnf/hang-tag-counterfeit.jpg",
+        observation: modelObs({
+          note: "Whole tag front visible.",
+          text: "THE NORTH FACE\nICONIC\nNUPTSE",
+          details: ["Cardboard hang tag with mountain image"],
+          differences: [
+            { feature: "Hang tag color and image", description: "The lower panel is near-black instead of navy, and the mountain image is lower resolution than the authentic tag.", severity: "meaningful" },
+          ],
+          summary: "Hang tag color and image quality differ from the authentic tag.",
+        }),
+      },
+    },
+  },
 ];
 
 export function getDemoCase(id: string): DemoCaseDef | undefined {

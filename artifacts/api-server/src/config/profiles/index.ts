@@ -1,6 +1,7 @@
 import type { Category, ProductProfile, ScreeningTier, TierResolution } from "@workspace/api-zod";
 import { arcteryxBetaLt } from "./arcteryx-beta-lt";
 import { nikeAf1White } from "./nike-af1-07-white";
+import { tnfNuptse } from "./tnf-nuptse";
 import {
   basicScreening,
   handbagsChecklist,
@@ -21,6 +22,7 @@ export { PROFILE_SET_VERSION } from "./define";
 export const PROFILES: ProductProfile[] = [
   arcteryxBetaLt,
   nikeAf1White,
+  tnfNuptse,
   sneakersChecklist,
   streetwearChecklist,
   outerwearChecklist,
