@@ -182,6 +182,12 @@ export const CreateCheckResponse = zod.object({
   "presence": zod.record(zod.string(), zod.boolean()).describe('Seller answers to presence questions, keyed by question id'),
   "status": zod.enum(['in_progress', 'passed', 'photo_check_complete', 'retake_requested', 'manual_review']),
   "decision": zod.union([zod.object({
+  "evidence": zod.union([zod.object({
+  "consistent": zod.number().describe('Usable photo checks with no warning signs, differences or conflicts'),
+  "total": zod.number().describe('Usable photo checks evaluated'),
+  "percent": zod.number(),
+  "label": zod.string().describe('Plain-language explanation of what the percentage means')
+}),zod.null()]).optional().describe('Share of usable photo checks consistent with the references and warning-sign checklist. Not a probability of authenticity.'),
   "outcome": zod.enum(['passed', 'photo_check_complete', 'retake_requested', 'manual_review']),
   "tier": zod.enum(['model_specific', 'category_checklist', 'basic_photo']),
   "headline": zod.string(),
@@ -273,6 +279,12 @@ export const GetCheckResponse = zod.object({
   "presence": zod.record(zod.string(), zod.boolean()).describe('Seller answers to presence questions, keyed by question id'),
   "status": zod.enum(['in_progress', 'passed', 'photo_check_complete', 'retake_requested', 'manual_review']),
   "decision": zod.union([zod.object({
+  "evidence": zod.union([zod.object({
+  "consistent": zod.number().describe('Usable photo checks with no warning signs, differences or conflicts'),
+  "total": zod.number().describe('Usable photo checks evaluated'),
+  "percent": zod.number(),
+  "label": zod.string().describe('Plain-language explanation of what the percentage means')
+}),zod.null()]).optional().describe('Share of usable photo checks consistent with the references and warning-sign checklist. Not a probability of authenticity.'),
   "outcome": zod.enum(['passed', 'photo_check_complete', 'retake_requested', 'manual_review']),
   "tier": zod.enum(['model_specific', 'category_checklist', 'basic_photo']),
   "headline": zod.string(),
@@ -420,6 +432,12 @@ export const SetDetailPresenceResponse = zod.object({
   "presence": zod.record(zod.string(), zod.boolean()).describe('Seller answers to presence questions, keyed by question id'),
   "status": zod.enum(['in_progress', 'passed', 'photo_check_complete', 'retake_requested', 'manual_review']),
   "decision": zod.union([zod.object({
+  "evidence": zod.union([zod.object({
+  "consistent": zod.number().describe('Usable photo checks with no warning signs, differences or conflicts'),
+  "total": zod.number().describe('Usable photo checks evaluated'),
+  "percent": zod.number(),
+  "label": zod.string().describe('Plain-language explanation of what the percentage means')
+}),zod.null()]).optional().describe('Share of usable photo checks consistent with the references and warning-sign checklist. Not a probability of authenticity.'),
   "outcome": zod.enum(['passed', 'photo_check_complete', 'retake_requested', 'manual_review']),
   "tier": zod.enum(['model_specific', 'category_checklist', 'basic_photo']),
   "headline": zod.string(),
@@ -514,6 +532,12 @@ export const EvaluateCheckResponse = zod.object({
   "presence": zod.record(zod.string(), zod.boolean()).describe('Seller answers to presence questions, keyed by question id'),
   "status": zod.enum(['in_progress', 'passed', 'photo_check_complete', 'retake_requested', 'manual_review']),
   "decision": zod.union([zod.object({
+  "evidence": zod.union([zod.object({
+  "consistent": zod.number().describe('Usable photo checks with no warning signs, differences or conflicts'),
+  "total": zod.number().describe('Usable photo checks evaluated'),
+  "percent": zod.number(),
+  "label": zod.string().describe('Plain-language explanation of what the percentage means')
+}),zod.null()]).optional().describe('Share of usable photo checks consistent with the references and warning-sign checklist. Not a probability of authenticity.'),
   "outcome": zod.enum(['passed', 'photo_check_complete', 'retake_requested', 'manual_review']),
   "tier": zod.enum(['model_specific', 'category_checklist', 'basic_photo']),
   "headline": zod.string(),
@@ -666,6 +690,12 @@ export const RunDemoCaseResponse = zod.object({
   "presence": zod.record(zod.string(), zod.boolean()).describe('Seller answers to presence questions, keyed by question id'),
   "status": zod.enum(['in_progress', 'passed', 'photo_check_complete', 'retake_requested', 'manual_review']),
   "decision": zod.union([zod.object({
+  "evidence": zod.union([zod.object({
+  "consistent": zod.number().describe('Usable photo checks with no warning signs, differences or conflicts'),
+  "total": zod.number().describe('Usable photo checks evaluated'),
+  "percent": zod.number(),
+  "label": zod.string().describe('Plain-language explanation of what the percentage means')
+}),zod.null()]).optional().describe('Share of usable photo checks consistent with the references and warning-sign checklist. Not a probability of authenticity.'),
   "outcome": zod.enum(['passed', 'photo_check_complete', 'retake_requested', 'manual_review']),
   "tier": zod.enum(['model_specific', 'category_checklist', 'basic_photo']),
   "headline": zod.string(),

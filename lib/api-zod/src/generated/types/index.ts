@@ -22,6 +22,7 @@ export * from './decisionReasonCode';
 export * from './demoCase';
 export * from './demoCaseExpectedOutcome';
 export * from './errorResponse';
+export * from './evidenceScore';
 export * from './expectedCode';
 export * from './healthStatus';
 export * from './inspectionStep';

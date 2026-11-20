@@ -10,8 +10,32 @@ import type {
   StepSummary,
   WashTagComparison,
   WarningSign,
+  EvidenceScore,
 } from "@workspace/api-zod";
 import { retakeMessage, retakeVoicePromptId, type RetakeKind } from "../config/voicePrompts";
+import { AF1_STYLE_CODE_PATTERN } from "../config/profiles/nike-af1-07-white";
+
+/**
+ * Documented style-code formats per model profile. A code that matches the
+ * format on that profile's tag counts as a style code even when the tag
+ * doesn't print a "STYLE" label (Nike size tags don't).
+ */
+const STYLE_CODE_PATTERNS: Record<string, RegExp> = {
+  "nike-af1-07-white": AF1_STYLE_CODE_PATTERN,
+};
+
+function withDocumentedCodeTypes(profile: ProductProfile, obs: PhotoObservation): PhotoObservation {
+  const pattern = STYLE_CODE_PATTERNS[profile.id];
+  if (!pattern) return obs;
+  return {
+    ...obs,
+    codes: obs.codes.map((c) =>
+      pattern.test(c.value.trim().toUpperCase().replace(/\s+/g, ""))
+        ? { ...c, codeType: "style_code" as const, purposeIdentified: true }
+        : c,
+    ),
+  };
+}
 
 export const DISCLAIMER =
   "This result screens the photos you supplied for visible discrepancies. It is not an authentication, and the marketplace can still request a human review.";
@@ -61,8 +85,13 @@ const normalizeCode = (c: string) => c.toUpperCase().replace(/[^A-Z0-9]/g, "");
  * model-specific tier. Category and basic tiers rely only on photo usability,
  * visible text, and presence of expected details.
  */
-export function decide(input: RulesInput): CheckDecision {
-  const { profile, tier, mode, presence, observations } = input;
+export function decide(inputArg: RulesInput): CheckDecision {
+  let input = inputArg;
+  const { profile, tier, mode, presence } = input;
+  const observations: RulesInput["observations"] = Object.fromEntries(
+    Object.entries(input.observations).map(([k, o]) => [k, o ? withDocumentedCodeTypes(profile, o) : o]),
+  );
+  input = { ...input, observations };
   const modelTier = tier === "model_specific";
   const reasons: DecisionReason[] = [];
   const retakes: RetakeRequest[] = [];
@@ -140,7 +169,7 @@ export function decide(input: RulesInput): CheckDecision {
       continue;
     }
 
-    if (!modelTier) {
+    if (!modelTier || (step.references.length === 0 && !step.compareCodes)) {
       steps.push({
         stepId: step.id,
         status: "ok",
@@ -191,6 +220,7 @@ export function decide(input: RulesInput): CheckDecision {
 
   applyWarningSigns(input, reasons, steps);
   crossCheckLabels(input, reasons, steps);
+  const evidence = evidenceScore(input, steps);
 
   let outcome: CheckDecision["outcome"];
   let headline: string;
@@ -223,8 +253,34 @@ export function decide(input: RulesInput): CheckDecision {
     retakes,
     washTag,
     steps,
+    evidence: outcome === "retake_requested" ? null : evidence,
     decidedAt: new Date(),
     disclaimer: DISCLAIMER,
+  };
+}
+
+/**
+ * Evidence score: the share of usable photo checks that showed no warning
+ * signs, visible differences or conflicts. It is computed from the checks,
+ * not guessed by the model, and it is not a probability of authenticity.
+ */
+function evidenceScore(input: RulesInput, steps: StepSummary[]): EvidenceScore | null {
+  let total = 0;
+  let consistent = 0;
+  for (const s of steps) {
+    const obs = input.observations[s.stepId];
+    if (!obs || !obs.quality.usable || s.status === "skipped" || s.status === "missing" || s.status === "retake") continue;
+    total++;
+    const hasSigns = (s.warningSigns?.length ?? 0) > 0;
+    if (s.status === "ok" && !hasSigns) consistent++;
+  }
+  if (total === 0) return null;
+  const percent = Math.round((consistent / total) * 100);
+  return {
+    consistent,
+    total,
+    percent,
+    label: `${consistent} of ${total} photo checks showed no warning signs. This is the share of checks passed, not a probability that the item is authentic.`,
   };
 }
 
@@ -345,6 +401,7 @@ function applyWarningSigns(input: RulesInput, reasons: DecisionReason[], steps: 
  */
 const LABEL_CROSS_CHECKS: Record<string, { a: string; b: string; label: string }[]> = {
   "category-sneakers": [{ a: "box_label", b: "size_tag", label: "box label and size tag" }],
+  "nike-af1-07-white": [{ a: "box_label", b: "size_tag", label: "box label and size tag" }],
 };
 
 const US_SIZE = /\bUS\s*(?:M(?:EN'?S)?\s*)?(\d{1,2}(?:\.5)?)\b/i;

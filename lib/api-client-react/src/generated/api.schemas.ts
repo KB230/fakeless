@@ -370,6 +370,16 @@ export interface StepSummary {
   warningSigns?: WarningSign[];
 }
 
+export interface EvidenceScore {
+  /** Usable photo checks with no warning signs, differences or conflicts */
+  consistent: number;
+  /** Usable photo checks evaluated */
+  total: number;
+  percent: number;
+  /** Plain-language explanation of what the percentage means */
+  label: string;
+}
+
 export type CheckDecisionOutcome = typeof CheckDecisionOutcome[keyof typeof CheckDecisionOutcome];
 
 
@@ -381,6 +391,8 @@ export const CheckDecisionOutcome = {
 } as const;
 
 export interface CheckDecision {
+  /** Share of usable photo checks consistent with the references and warning-sign checklist. Not a probability of authenticity. */
+  evidence?: EvidenceScore | null;
   outcome: CheckDecisionOutcome;
   tier: ScreeningTier;
   headline: string;

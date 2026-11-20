@@ -7,12 +7,15 @@
  */
 import type { CheckDecisionOutcome } from './checkDecisionOutcome';
 import type { DecisionReason } from './decisionReason';
+import type { EvidenceScore } from './evidenceScore';
 import type { RetakeRequest } from './retakeRequest';
 import type { ScreeningTier } from './screeningTier';
 import type { StepSummary } from './stepSummary';
 import type { WashTagComparison } from './washTagComparison';
 
 export interface CheckDecision {
+  /** Share of usable photo checks consistent with the references and warning-sign checklist. Not a probability of authenticity. */
+  evidence?: EvidenceScore | null;
   outcome: CheckDecisionOutcome;
   tier: ScreeningTier;
   headline: string;

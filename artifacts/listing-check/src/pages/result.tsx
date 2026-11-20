@@ -66,6 +66,22 @@ export default function Result() {
         </p>
       </section>
 
+      {d.evidence && (
+        <section className="mt-3 rounded-2xl border border-foreground/10 bg-card p-4" data-testid="panel-evidence">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Authenticity evidence score</p>
+              <p className="font-display text-4xl font-extrabold leading-none" data-testid="text-evidence-percent">{d.evidence.percent}%</p>
+            </div>
+            <p className="text-right font-mono text-xs text-muted-foreground">{d.evidence.consistent} of {d.evidence.total} checks<br />consistent</p>
+          </div>
+          <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-muted" role="img" aria-label={`${d.evidence.percent} percent of checks consistent`}>
+            <div className="h-full rounded-full" style={{ width: `${d.evidence.percent}%`, background: d.evidence.percent >= 80 ? "hsl(158 55% 38%)" : d.evidence.percent >= 50 ? "hsl(38 90% 50%)" : "hsl(0 70% 50%)" }} />
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground" data-testid="text-evidence-label">{d.evidence.label}</p>
+        </section>
+      )}
+
       <p className="mt-3 flex gap-2 rounded-xl bg-card/80 p-3 text-xs text-muted-foreground" data-testid="text-disclaimer">
         <ShieldAlert className="h-4 w-4 shrink-0" />{d.disclaimer}
       </p>

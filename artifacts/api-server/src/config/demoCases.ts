@@ -44,6 +44,30 @@ const categoryObs = (o: {
   warningSigns: o.warningSigns ?? [],
 });
 
+/** Observation helper for model-specific demo photos compared to references. */
+const modelObs = (o: {
+  note: string;
+  text?: string;
+  codes?: PhotoObservation["codes"];
+  details: string[];
+  differences?: PhotoObservation["differences"];
+  summary: string;
+  warningSigns?: PhotoObservation["warningSigns"];
+}): PhotoObservation => ({
+  quality: { usable: true, issues: [], note: o.note },
+  extractedText: o.text ?? "",
+  codes: o.codes ?? [],
+  visibleDetails: o.details,
+  differences: o.differences ?? [],
+  comparisonReliable: true,
+  uncertaintyNote: null,
+  summary: o.summary,
+  warningSigns: o.warningSigns ?? [],
+});
+
+const af1Tier = resolveTier("sneakers", "nike-af1-07-white");
+const AF1 = (f: string) => `demo/af1/${f}-counterfeit.jpg`;
+
 const sneakerTier = resolveTier("sneakers");
 const basicTier = resolveTier("other");
 
@@ -404,6 +428,114 @@ export const DEMO_CASES: DemoCaseDef[] = [
               kind: "subjective",
             },
           ],
+        }),
+      },
+    },
+  },
+  {
+    id: "af1-counterfeit",
+    title: "Air Force 1 White, counterfeit signs",
+    description:
+      "A white Air Force 1 '07 checked against photos of an authentic pair. The style code on the tag is a real Nike code, but the heel embroidery, swoosh, toe perforations, lace tag, midsole and outsole all differ from the authentic pair, and the outsole has a molded size number retail pairs don't have.",
+    expectedOutcome: "manual_review",
+    tier: "model_specific",
+    categoryId: "sneakers",
+    tierNote: af1Tier.note,
+    profileId: "nike-af1-07-white",
+    condition: "new_with_tags",
+    askingPrice: 45,
+    presence: { size_tag: true, box_label: false },
+    photos: {
+      side_profile: {
+        imageUrl: AF1("side-profile"),
+        observation: modelObs({
+          note: "Whole shoe in frame from the side.",
+          details: ["All-white leather upper", "AIR text on the midsole", "Swoosh on the lateral side"],
+          differences: [{ feature: "Swoosh proportion", description: "Swoosh looks slightly slimmer than the reference at this distance.", severity: "minor" }],
+          summary: "Overall shape is close to the authentic pair from this distance.",
+        }),
+      },
+      swoosh: {
+        imageUrl: AF1("swoosh-curve"),
+        observation: modelObs({
+          note: "Swoosh fills the frame, sharp.",
+          details: ["Stitched leather swoosh"],
+          differences: [
+            { feature: "Swoosh shape", description: "The swoosh is thinner and its curve starts late and turns abruptly, leaving a wider gap than the authentic pair.", severity: "meaningful" },
+            { feature: "Swoosh stitching", description: "Stitches around the swoosh sit at uneven depths, some sunk and some raised.", severity: "meaningful" },
+          ],
+          summary: "Swoosh shape and stitching differ from the authentic pair.",
+        }),
+      },
+      heel: {
+        imageUrl: AF1("heel-embroidery"),
+        observation: modelObs({
+          note: "Heel embroidery in focus.",
+          text: "NIKE\nAIR",
+          details: ["Embroidered NIKE swoosh and AIR on the heel tab"],
+          differences: [
+            { feature: "Heel embroidery depth", description: "NIKE and the swoosh look flat and thin, without the raised, dense embroidery of the reference.", severity: "meaningful" },
+            { feature: "AIR lettering", description: "The A is shorter and the legs of the R are uneven compared to the reference.", severity: "meaningful" },
+          ],
+          warningSigns: [{ indicator: "Loose threads in the embroidery", observed: "Stray threads run between the I and R of AIR.", kind: "subjective" }],
+          summary: "Heel embroidery is flatter and thinner than the authentic pair.",
+        }),
+      },
+      toe_box: {
+        imageUrl: AF1("toe-box"),
+        observation: modelObs({
+          note: "All perforations visible from above.",
+          details: ["Perforated toe box", "Metal lace tag visible"],
+          differences: [{ feature: "Perforations", description: "Holes are punched wider and spaced irregularly; the lowest hole sits closer to the toe stitching than on the reference.", severity: "meaningful" }],
+          summary: "Toe perforations don't match the authentic pattern.",
+        }),
+      },
+      lace_tag: {
+        imageUrl: AF1("lace-tag"),
+        observation: modelObs({
+          note: "Metal tag straight on.",
+          text: "AF1",
+          details: ["Metal AF1 lace tag"],
+          differences: [{ feature: "Lace tag finish", description: "The tag has a bronze, mirror-like tone with visible scratches, where the reference is a muted silver with a smooth finish.", severity: "meaningful" }],
+          summary: "Metal lace tag color and finish differ from the authentic pair.",
+        }),
+      },
+      size_tag: {
+        imageUrl: AF1("size-tag"),
+        observation: modelObs({
+          note: "Tag readable; slight angle but every line legible.",
+          text: "US 8\n315122-111\n11/09/20 | 12/08/20\nUPC 00194500874916\nUK 7  EUR 41  cm 26  BR 39.5  CN 260(2.5)\n0142K6YMQ2XXK\nMADE IN VIETNAM\nHECHO EN VIETNAM\nFABRIQUE AU VIETNAM\nFABRICADO NO VIETNA\nThis product is covered by one or more patents:\nwww.nike.com/patentsvirtualmarking",
+          codes: [{ value: "315122-111", codeType: "unknown", purposeIdentified: false, confidence: "high" }],
+          details: ["Printed size tag with QR code"],
+          warningSigns: [
+            { indicator: "Country of manufacture cut off on a language line", observed: "The Portuguese line reads \"FABRICADO NO VIETNA\": the final M is missing.", kind: "objective" },
+            { indicator: "Uneven letter spacing", observed: "Extra space between C and H in HECHO, and the letters in \"patents\" nearly overlap.", kind: "subjective" },
+          ],
+          summary: "The style code is a real Nike code, but the tag print has clear errors.",
+        }),
+      },
+      midsole_air: {
+        imageUrl: AF1("midsole-air"),
+        observation: modelObs({
+          note: "AIR lettering sharp.",
+          text: "AIR",
+          details: ["Molded AIR text and line on the midsole"],
+          differences: [
+            { feature: "AIR line end", description: "The line beside AIR ends square at 90 degrees; the reference ends with a slight slope.", severity: "meaningful" },
+            { feature: "Midsole stitching", description: "Stitching above AIR is shallow and uneven.", severity: "meaningful" },
+          ],
+          summary: "Midsole details differ from the authentic pair.",
+        }),
+      },
+      outsole: {
+        imageUrl: AF1("outsole"),
+        observation: modelObs({
+          note: "Whole heel area of the sole in frame.",
+          text: "37",
+          details: ["Pivot circle", "Star pattern at the edge"],
+          differences: [{ feature: "Tread texture", description: "Tread texture is coarser and the stars are thicker than the reference.", severity: "meaningful" }],
+          warningSigns: [{ indicator: "Numerals molded into the sole", observed: "A circled \"37\" is molded into the pivot circle; retail pairs have no numbers there.", kind: "objective" }],
+          summary: "The outsole has a molded size number and a coarser texture.",
         }),
       },
     },

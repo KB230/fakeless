@@ -661,10 +661,29 @@ components:
           type: array
           description: Warning signs seen in this step's photo (objective and subjective)
           items: { $ref: "#/components/schemas/WarningSign" }
+    EvidenceScore:
+      type: object
+      required: [consistent, total, percent, label]
+      properties:
+        consistent:
+          type: integer
+          description: Usable photo checks with no warning signs, differences or conflicts
+        total:
+          type: integer
+          description: Usable photo checks evaluated
+        percent: { type: integer }
+        label:
+          type: string
+          description: Plain-language explanation of what the percentage means
     CheckDecision:
       type: object
       required: [outcome, tier, headline, reasons, retakes, washTag, steps, decidedAt, disclaimer]
       properties:
+        evidence:
+          description: Share of usable photo checks consistent with the references and warning-sign checklist. Not a probability of authenticity.
+          oneOf:
+            - $ref: "#/components/schemas/EvidenceScore"
+            - type: "null"
         outcome:
           type: string
           enum: [passed, photo_check_complete, retake_requested, manual_review]
