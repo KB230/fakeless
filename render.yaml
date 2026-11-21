@@ -6,7 +6,7 @@ services:
     runtime: node
     plan: free
     buildCommand: >-
-      corepack enable && pnpm install --frozen-lockfile &&
+      corepack enable && corepack prepare pnpm@10.28.0 --activate && pnpm install --frozen-lockfile &&
       PORT=3000 BASE_PATH=/ pnpm --filter @workspace/listing-check run build &&
       pnpm --filter @workspace/api-server run build &&
       pnpm --filter @workspace/db run push
