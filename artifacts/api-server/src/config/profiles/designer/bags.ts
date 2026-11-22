@@ -50,7 +50,7 @@ export const lvSpeedy = defineProfile({
   ...bag,
   id: "lv-speedy",
   brand: "Louis Vuitton",
-  model: "Speedy (Monogram canvas)",
+  model: "Speedy (Monogram or Damier canvas)",
   generation: "Speedy 25 / 30 / 35, including Bandoulière",
   category: "Top-handle bag",
   referenceNote: DESIGNER_REFERENCE_NOTE("Date codes are read and checked for format, but the code never passes a bag on its own."),
@@ -67,7 +67,7 @@ export const lvSpeedy = defineProfile({
       "Stand the bag upright and step back until the whole front, both handles included, fits in the frame.",
       "Fit the whole bag front, both handles, in the frame.",
       [
-        "the Speedy is one continuous piece of canvas, so the monogram runs upside down on the back panel; a back panel with upright monogram is a warning sign",
+        "Monogram canvas only: the Speedy is one continuous piece of canvas, so the monogram runs upside down on the back panel; an upright monogram on the back is a warning sign (does not apply to Damier)",
         "LV monogram and flowers sit symmetrically and continue cleanly across seams; pattern cut off or misaligned at a seam",
         "sides curve outward with a narrower base; boxy straight corners are a warning sign",
         "monogram motifs look yellowish or dark rather than light beige",
