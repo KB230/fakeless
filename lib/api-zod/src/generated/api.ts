@@ -185,9 +185,15 @@ export const CreateCheckResponse = zod.object({
   "evidence": zod.union([zod.object({
   "consistent": zod.number().describe('Usable photo checks with no warning signs, differences or conflicts'),
   "total": zod.number().describe('Usable photo checks evaluated'),
-  "percent": zod.number(),
-  "label": zod.string().describe('Plain-language explanation of what the percentage means')
-}),zod.null()]).optional().describe('Share of usable photo checks consistent with the references and warning-sign checklist. Not a probability of authenticity.'),
+  "percent": zod.number().describe('Research-weighted authenticity evidence score (5-95). Not a calibrated probability.'),
+  "label": zod.string().describe('Plain-language explanation of what the percentage means'),
+  "confidence": zod.enum(['low', 'medium', 'high']).describe('How much of the item the usable photos covered'),
+  "coveragePercent": zod.number().describe('Share of required photo steps with a usable photo'),
+  "factors": zod.array(zod.object({
+  "label": zod.string(),
+  "direction": zod.enum(['supports', 'weakens', 'strong_against'])
+})).describe('The findings that moved the score, strongest first')
+}),zod.null()]).optional().describe('Research-weighted evidence score from the usable photos, shown even when some photos still need a retake. Not a probability of authenticity.'),
   "outcome": zod.enum(['passed', 'photo_check_complete', 'retake_requested', 'manual_review']),
   "tier": zod.enum(['model_specific', 'category_checklist', 'basic_photo']),
   "headline": zod.string(),
@@ -282,9 +288,15 @@ export const GetCheckResponse = zod.object({
   "evidence": zod.union([zod.object({
   "consistent": zod.number().describe('Usable photo checks with no warning signs, differences or conflicts'),
   "total": zod.number().describe('Usable photo checks evaluated'),
-  "percent": zod.number(),
-  "label": zod.string().describe('Plain-language explanation of what the percentage means')
-}),zod.null()]).optional().describe('Share of usable photo checks consistent with the references and warning-sign checklist. Not a probability of authenticity.'),
+  "percent": zod.number().describe('Research-weighted authenticity evidence score (5-95). Not a calibrated probability.'),
+  "label": zod.string().describe('Plain-language explanation of what the percentage means'),
+  "confidence": zod.enum(['low', 'medium', 'high']).describe('How much of the item the usable photos covered'),
+  "coveragePercent": zod.number().describe('Share of required photo steps with a usable photo'),
+  "factors": zod.array(zod.object({
+  "label": zod.string(),
+  "direction": zod.enum(['supports', 'weakens', 'strong_against'])
+})).describe('The findings that moved the score, strongest first')
+}),zod.null()]).optional().describe('Research-weighted evidence score from the usable photos, shown even when some photos still need a retake. Not a probability of authenticity.'),
   "outcome": zod.enum(['passed', 'photo_check_complete', 'retake_requested', 'manual_review']),
   "tier": zod.enum(['model_specific', 'category_checklist', 'basic_photo']),
   "headline": zod.string(),
@@ -435,9 +447,15 @@ export const SetDetailPresenceResponse = zod.object({
   "evidence": zod.union([zod.object({
   "consistent": zod.number().describe('Usable photo checks with no warning signs, differences or conflicts'),
   "total": zod.number().describe('Usable photo checks evaluated'),
-  "percent": zod.number(),
-  "label": zod.string().describe('Plain-language explanation of what the percentage means')
-}),zod.null()]).optional().describe('Share of usable photo checks consistent with the references and warning-sign checklist. Not a probability of authenticity.'),
+  "percent": zod.number().describe('Research-weighted authenticity evidence score (5-95). Not a calibrated probability.'),
+  "label": zod.string().describe('Plain-language explanation of what the percentage means'),
+  "confidence": zod.enum(['low', 'medium', 'high']).describe('How much of the item the usable photos covered'),
+  "coveragePercent": zod.number().describe('Share of required photo steps with a usable photo'),
+  "factors": zod.array(zod.object({
+  "label": zod.string(),
+  "direction": zod.enum(['supports', 'weakens', 'strong_against'])
+})).describe('The findings that moved the score, strongest first')
+}),zod.null()]).optional().describe('Research-weighted evidence score from the usable photos, shown even when some photos still need a retake. Not a probability of authenticity.'),
   "outcome": zod.enum(['passed', 'photo_check_complete', 'retake_requested', 'manual_review']),
   "tier": zod.enum(['model_specific', 'category_checklist', 'basic_photo']),
   "headline": zod.string(),
@@ -535,9 +553,15 @@ export const EvaluateCheckResponse = zod.object({
   "evidence": zod.union([zod.object({
   "consistent": zod.number().describe('Usable photo checks with no warning signs, differences or conflicts'),
   "total": zod.number().describe('Usable photo checks evaluated'),
-  "percent": zod.number(),
-  "label": zod.string().describe('Plain-language explanation of what the percentage means')
-}),zod.null()]).optional().describe('Share of usable photo checks consistent with the references and warning-sign checklist. Not a probability of authenticity.'),
+  "percent": zod.number().describe('Research-weighted authenticity evidence score (5-95). Not a calibrated probability.'),
+  "label": zod.string().describe('Plain-language explanation of what the percentage means'),
+  "confidence": zod.enum(['low', 'medium', 'high']).describe('How much of the item the usable photos covered'),
+  "coveragePercent": zod.number().describe('Share of required photo steps with a usable photo'),
+  "factors": zod.array(zod.object({
+  "label": zod.string(),
+  "direction": zod.enum(['supports', 'weakens', 'strong_against'])
+})).describe('The findings that moved the score, strongest first')
+}),zod.null()]).optional().describe('Research-weighted evidence score from the usable photos, shown even when some photos still need a retake. Not a probability of authenticity.'),
   "outcome": zod.enum(['passed', 'photo_check_complete', 'retake_requested', 'manual_review']),
   "tier": zod.enum(['model_specific', 'category_checklist', 'basic_photo']),
   "headline": zod.string(),
@@ -693,9 +717,15 @@ export const RunDemoCaseResponse = zod.object({
   "evidence": zod.union([zod.object({
   "consistent": zod.number().describe('Usable photo checks with no warning signs, differences or conflicts'),
   "total": zod.number().describe('Usable photo checks evaluated'),
-  "percent": zod.number(),
-  "label": zod.string().describe('Plain-language explanation of what the percentage means')
-}),zod.null()]).optional().describe('Share of usable photo checks consistent with the references and warning-sign checklist. Not a probability of authenticity.'),
+  "percent": zod.number().describe('Research-weighted authenticity evidence score (5-95). Not a calibrated probability.'),
+  "label": zod.string().describe('Plain-language explanation of what the percentage means'),
+  "confidence": zod.enum(['low', 'medium', 'high']).describe('How much of the item the usable photos covered'),
+  "coveragePercent": zod.number().describe('Share of required photo steps with a usable photo'),
+  "factors": zod.array(zod.object({
+  "label": zod.string(),
+  "direction": zod.enum(['supports', 'weakens', 'strong_against'])
+})).describe('The findings that moved the score, strongest first')
+}),zod.null()]).optional().describe('Research-weighted evidence score from the usable photos, shown even when some photos still need a retake. Not a probability of authenticity.'),
   "outcome": zod.enum(['passed', 'photo_check_complete', 'retake_requested', 'manual_review']),
   "tier": zod.enum(['model_specific', 'category_checklist', 'basic_photo']),
   "headline": zod.string(),

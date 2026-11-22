@@ -24,6 +24,21 @@ const GATEWAY_KEY = process.env["AI_GATEWAY_API_KEY"];
 const RAW_MODEL = process.env["OPENAI_VISION_MODEL"] ?? "gpt-5";
 const MODEL = GATEWAY_KEY && !RAW_MODEL.includes("/") ? `openai/${RAW_MODEL}` : RAW_MODEL;
 
+/**
+ * Speed: reasoning models spend most of each call "thinking". Photo checks
+ * are observation tasks, so they run at a low reasoning effort: "low" for
+ * steps that must read printed text and codes, "minimal" for purely visual
+ * steps. OPENAI_REASONING_EFFORT overrides both. Non-reasoning models get no
+ * reasoning parameter at all.
+ */
+type Effort = "minimal" | "low" | "medium" | "high";
+const EFFORT_OVERRIDE = process.env["OPENAI_REASONING_EFFORT"] as Effort | undefined;
+const IS_REASONING_MODEL = /(^|\/)(gpt-5|o\d)/i.test(MODEL);
+function reasoningEffort(step: InspectionStep): Effort | undefined {
+  if (!IS_REASONING_MODEL) return undefined;
+  return EFFORT_OVERRIDE ?? (step.readsText ? "low" : "minimal");
+}
+
 let client: OpenAI | null = null;
 export function visionConfigured(): boolean {
   return !!(GATEWAY_KEY || process.env["OPENAI_API_KEY"]);
@@ -31,8 +46,8 @@ export function visionConfigured(): boolean {
 function getClient(): OpenAI {
   if (!visionConfigured()) throw new VisionNotConfiguredError();
   client ??= GATEWAY_KEY
-    ? new OpenAI({ apiKey: GATEWAY_KEY, baseURL: "https://ai-gateway.vercel.sh/v1" })
-    : new OpenAI({ apiKey: process.env["OPENAI_API_KEY"] });
+    ? new OpenAI({ apiKey: GATEWAY_KEY, baseURL: "https://ai-gateway.vercel.sh/v1", timeout: 90_000, maxRetries: 1 })
+    : new OpenAI({ apiKey: process.env["OPENAI_API_KEY"], timeout: 90_000, maxRetries: 1 });
   return client;
 }
 
@@ -43,7 +58,18 @@ const PUBLIC_DIR_CANDIDATES = [
   path.resolve(process.cwd(), "../listing-check/dist/public"),
 ];
 
-async function loadReferenceDataUrl(rel: string): Promise<string | null> {
+/** Reference images never change at runtime, so they are read from disk once. */
+const referenceCache = new Map<string, Promise<string | null>>();
+function loadReferenceDataUrl(rel: string): Promise<string | null> {
+  let cached = referenceCache.get(rel);
+  if (!cached) {
+    cached = readReferenceDataUrl(rel);
+    referenceCache.set(rel, cached);
+  }
+  return cached;
+}
+
+async function readReferenceDataUrl(rel: string): Promise<string | null> {
   for (const dir of PUBLIC_DIR_CANDIDATES) {
     try {
       const buf = await readFile(path.join(dir, rel));
@@ -159,7 +185,7 @@ function buildInstructions(profile: ProductProfile, step: InspectionStep, hasRef
       : modelProfile
         ? "Only the seller's photo is provided; no reference image is available for comparison, so set comparisonReliable to false and explain in uncertaintyNote."
         : "This is a category-level check with no model reference. Do not compare against any specific brand's design: return differences as an empty array, set comparisonReliable to false and uncertaintyNote to 'Category check: no model reference.' You still check the photo for the general warning signs listed above.",
-    "Photo quality: set quality.usable=false if the required subject is blurry, cropped/partly out of frame, too far away, at an unusable angle, too dark, obscured by glare, or not the requested subject. List every issue. Be strict for text: if any printed characters needed for a code are not legible, mark blurry or cropped.",
+    "Photo quality: work with the photo you have. Set quality.usable=true whenever the requested feature can still be inspected, even if the photo is imperfect; list any issues (blurry, cropped, bad_angle, too_dark, glare, too_far) and assess what IS visible. Set quality.usable=false only when the requested subject is missing, is the wrong subject, or is so blurred, dark, cropped or glared that the feature cannot be inspected at all. For text steps: if the main text is readable but a few characters are not, keep usable=true, transcribe what you can and mark unreadable characters with '?'.",
     isTag
       ? "Text: transcribe ALL printed text verbatim into extractedText, line by line. For each alphanumeric code, add an entry in codes. Set purposeIdentified=true ONLY when a printed label or unambiguous context identifies what the code is (e.g. 'STYLE', 'STYLE NO', 'MODEL', 'RN', 'CA'). Use codeType 'unknown' and purposeIdentified=false when you cannot tell what a code is. Do not guess."
       : "Text: transcribe any visible lettering verbatim into extractedText (empty string if none). Leave codes empty unless a code is printed.",
@@ -183,8 +209,10 @@ export async function analyzePhoto(
   ).filter((u): u is string => !!u);
 
   try {
+    const effort = reasoningEffort(step);
     const completion = await openai.chat.completions.create({
       model: MODEL,
+      ...(effort ? { reasoning_effort: effort } : {}),
       messages: [
         { role: "system", content: buildInstructions(profile, step, refUrls.length > 0) },
         {

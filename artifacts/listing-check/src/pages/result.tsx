@@ -73,11 +73,26 @@ export default function Result() {
               <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Authenticity evidence score</p>
               <p className="font-display text-4xl font-extrabold leading-none" data-testid="text-evidence-percent">{d.evidence.percent}%</p>
             </div>
-            <p className="text-right font-mono text-xs text-muted-foreground">{d.evidence.consistent} of {d.evidence.total} checks<br />consistent</p>
+            <div className="text-right font-mono text-xs text-muted-foreground">
+              <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${d.evidence.confidence === "high" ? "bg-[hsl(158_40%_88%)] text-[hsl(164_64%_26%)]" : d.evidence.confidence === "medium" ? "bg-[hsl(42_90%_84%)] text-[hsl(32_90%_32%)]" : "bg-muted"}`} data-testid="text-evidence-confidence">
+                {d.evidence.confidence} confidence
+              </span>
+              <p className="mt-1">{d.evidence.coveragePercent}% of photos covered</p>
+            </div>
           </div>
-          <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-muted" role="img" aria-label={`${d.evidence.percent} percent of checks consistent`}>
-            <div className="h-full rounded-full" style={{ width: `${d.evidence.percent}%`, background: d.evidence.percent >= 80 ? "hsl(158 55% 38%)" : d.evidence.percent >= 50 ? "hsl(38 90% 50%)" : "hsl(0 70% 50%)" }} />
+          <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-muted" role="img" aria-label={`Authenticity evidence score ${d.evidence.percent} percent`}>
+            <div className="h-full rounded-full" style={{ width: `${d.evidence.percent}%`, background: d.evidence.percent >= 75 ? "hsl(158 55% 38%)" : d.evidence.percent >= 45 ? "hsl(38 90% 50%)" : "hsl(0 70% 50%)" }} />
           </div>
+          {d.evidence.factors.length > 0 && (
+            <ul className="mt-3 space-y-1 text-xs" data-testid="list-evidence-factors">
+              {d.evidence.factors.map((f, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${f.direction === "supports" ? "bg-[hsl(158_55%_38%)]" : f.direction === "weakens" ? "bg-[hsl(38_90%_50%)]" : "bg-[hsl(0_70%_50%)]"}`} />
+                  <span>{f.label}</span>
+                </li>
+              ))}
+            </ul>
+          )}
           <p className="mt-2 text-xs text-muted-foreground" data-testid="text-evidence-label">{d.evidence.label}</p>
         </section>
       )}
@@ -88,7 +103,8 @@ export default function Result() {
 
       {d.outcome === "retake_requested" && d.retakes.length > 0 && (
         <section className="mt-6">
-          <h2 className="font-display text-xl font-bold">Retake {d.retakes.length === 1 ? "this photo" : "these photos"}</h2>
+          <h2 className="font-display text-xl font-bold">{d.retakes.length === 1 ? "One photo still needed" : `${d.retakes.length} photos still needed`}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">The score above already uses every usable photo. Add these to complete the check.</p>
           <div className="mt-3 space-y-3">
             {d.retakes.map((r, i) => (
               <div key={r.stepId} className="rounded-2xl border-2 border-[hsl(42_90%_60%)] bg-card p-4" data-testid={`card-retake-${r.stepId}`}>
@@ -99,7 +115,7 @@ export default function Result() {
                   <p className="mt-3 rounded-lg bg-muted p-2.5 font-mono text-[11px]">Demo outcome. In a live check the seller would retake this photo here.</p>
                 ) : (
                   <Link href={`/check/${c.id}?step=${r.stepId}`} className={btnInk + " mt-3"} data-testid={`link-retake-${r.stepId}`}>
-                    <RotateCcw className="h-5 w-5" /> Retake {STEP_LABEL[r.stepId] ?? r.stepId}
+                    <RotateCcw className="h-5 w-5" /> {r.issue === "missing" ? "Add" : "Retake"} {titleFor(r.stepId).toLowerCase()}
                   </Link>
                 )}
               </div>
@@ -114,7 +130,7 @@ export default function Result() {
           <ul className="mt-3 space-y-2">
             {d.reasons.map((r, i) => (
               <li key={i} className="rounded-xl border border-foreground/10 bg-card p-3 text-sm" data-testid={`text-reason-${i}`}>
-                <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{r.code.replace(/_/g, " ")}{r.stepId ? ` · ${STEP_LABEL[r.stepId] ?? r.stepId}` : ""}</span>
+                <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{r.code.replace(/_/g, " ")}{r.stepId ? ` · ${titleFor(r.stepId)}` : ""}</span>
                 <p className="mt-0.5">{r.message}</p>
               </li>
             ))}

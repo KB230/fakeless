@@ -12,21 +12,21 @@ const sneaker = {
   category: "Sneakers",
 };
 
-const SIDE = (extra: string[]) =>
+export const SIDE = (extra: string[]) =>
   step("side_profile", "Side profile", "side profile photo",
     "Place one shoe on a flat surface and photograph it straight from the side, toe to heel.",
     "Fit the whole shoe, toe to heel, in the frame from the side.",
     ["visible glue stains along the sole or midsole", ...extra],
     { framingTips: ["Whole shoe, toe to heel", "Camera level with the shoe", "Plain background"] });
 
-const SIZE_TAG = (extra: string[]) =>
+export const SIZE_TAG = (extra: string[]) =>
   step("size_tag", "Inside size tag", "size tag photo",
     "Find the size tag inside the shoe (tongue or side wall) and photograph it flat and straight on so every line is readable.",
     "Hold the size tag flat and straight on so every letter and number is readable.",
     ["misspelled words or country of manufacture (objective)", "blurry, oversized or crooked print", ...extra],
     { presenceQuestionId: "size_tag", readsText: true, compareCodes: true, framingTips: ["Whole tag in frame", "Flat and straight on", "No glare"] });
 
-const BOX_LABEL = step("box_label", "Box label", "box label",
+export const BOX_LABEL = step("box_label", "Box label", "box label",
   "Photograph the label on the end of the box straight on, close enough that every line is readable.",
   "Fill the frame with the box label, straight on, every line readable.",
   ["style code and size don't match the size tag inside the shoe (objective if they differ)", "faded, thin or blurry label print"],
@@ -186,6 +186,3 @@ export const diorB23 = defineProfile({
 });
 
 export const DESIGNER_SNEAKERS = [balenciagaTripleS, gucciAce, goldenGooseSuperStar, diorB23];
-
-/** Sneaker profiles whose box label and size tag must agree. */
-export const DESIGNER_SNEAKER_IDS = DESIGNER_SNEAKERS.map((p) => p.id);

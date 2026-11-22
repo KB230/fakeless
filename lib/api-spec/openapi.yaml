@@ -661,9 +661,17 @@ components:
           type: array
           description: Warning signs seen in this step's photo (objective and subjective)
           items: { $ref: "#/components/schemas/WarningSign" }
+    EvidenceFactor:
+      type: object
+      required: [label, direction]
+      properties:
+        label: { type: string }
+        direction:
+          type: string
+          enum: [supports, weakens, strong_against]
     EvidenceScore:
       type: object
-      required: [consistent, total, percent, label]
+      required: [consistent, total, percent, label, confidence, coveragePercent, factors]
       properties:
         consistent:
           type: integer
@@ -671,16 +679,29 @@ components:
         total:
           type: integer
           description: Usable photo checks evaluated
-        percent: { type: integer }
+        percent:
+          type: integer
+          description: Research-weighted authenticity evidence score (5-95). Not a calibrated probability.
         label:
           type: string
           description: Plain-language explanation of what the percentage means
+        confidence:
+          type: string
+          enum: [low, medium, high]
+          description: How much of the item the usable photos covered
+        coveragePercent:
+          type: integer
+          description: Share of required photo steps with a usable photo
+        factors:
+          type: array
+          description: The findings that moved the score, strongest first
+          items: { $ref: "#/components/schemas/EvidenceFactor" }
     CheckDecision:
       type: object
       required: [outcome, tier, headline, reasons, retakes, washTag, steps, decidedAt, disclaimer]
       properties:
         evidence:
-          description: Share of usable photo checks consistent with the references and warning-sign checklist. Not a probability of authenticity.
+          description: Research-weighted evidence score from the usable photos, shown even when some photos still need a retake. Not a probability of authenticity.
           oneOf:
             - $ref: "#/components/schemas/EvidenceScore"
             - type: "null"

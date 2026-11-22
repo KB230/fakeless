@@ -370,14 +370,47 @@ export interface StepSummary {
   warningSigns?: WarningSign[];
 }
 
+export type EvidenceFactorDirection = typeof EvidenceFactorDirection[keyof typeof EvidenceFactorDirection];
+
+
+export const EvidenceFactorDirection = {
+  supports: 'supports',
+  weakens: 'weakens',
+  strong_against: 'strong_against',
+} as const;
+
+export interface EvidenceFactor {
+  label: string;
+  direction: EvidenceFactorDirection;
+}
+
+/**
+ * How much of the item the usable photos covered
+ */
+export type EvidenceScoreConfidence = typeof EvidenceScoreConfidence[keyof typeof EvidenceScoreConfidence];
+
+
+export const EvidenceScoreConfidence = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+} as const;
+
 export interface EvidenceScore {
   /** Usable photo checks with no warning signs, differences or conflicts */
   consistent: number;
   /** Usable photo checks evaluated */
   total: number;
+  /** Research-weighted authenticity evidence score (5-95). Not a calibrated probability. */
   percent: number;
   /** Plain-language explanation of what the percentage means */
   label: string;
+  /** How much of the item the usable photos covered */
+  confidence: EvidenceScoreConfidence;
+  /** Share of required photo steps with a usable photo */
+  coveragePercent: number;
+  /** The findings that moved the score, strongest first */
+  factors: EvidenceFactor[];
 }
 
 export type CheckDecisionOutcome = typeof CheckDecisionOutcome[keyof typeof CheckDecisionOutcome];
@@ -391,7 +424,7 @@ export const CheckDecisionOutcome = {
 } as const;
 
 export interface CheckDecision {
-  /** Share of usable photo checks consistent with the references and warning-sign checklist. Not a probability of authenticity. */
+  /** Research-weighted evidence score from the usable photos, shown even when some photos still need a retake. Not a probability of authenticity. */
   evidence?: EvidenceScore | null;
   outcome: CheckDecisionOutcome;
   tier: ScreeningTier;

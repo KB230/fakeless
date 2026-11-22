@@ -14,7 +14,7 @@ import type { StepSummary } from './stepSummary';
 import type { WashTagComparison } from './washTagComparison';
 
 export interface CheckDecision {
-  /** Share of usable photo checks consistent with the references and warning-sign checklist. Not a probability of authenticity. */
+  /** Research-weighted evidence score from the usable photos, shown even when some photos still need a retake. Not a probability of authenticity. */
   evidence?: EvidenceScore | null;
   outcome: CheckDecisionOutcome;
   tier: ScreeningTier;
