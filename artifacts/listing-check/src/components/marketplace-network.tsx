@@ -1,15 +1,24 @@
 import { useState } from "react";
+import { asset } from "@/lib/helpers";
 import "./marketplace-network.css";
 
+/*
+ * Logos: public-domain wordmarks from Wikimedia Commons, stored in
+ * public/marketplaces/. They are trademarks of their owners and are shown
+ * only to name the marketplaces in this concept diagram; none of these
+ * integrations is connected.
+ */
+// `w` = logo width within its tile, tuned so wordmarks of very different
+// proportions look about the same size.
 const marketplaces = [
-  { name: "eBay", x: 50, y: 13 },
-  { name: "Depop", x: 76, y: 24 },
-  { name: "Mercari", x: 87, y: 50 },
-  { name: "Vinted", x: 76, y: 76 },
-  { name: "Facebook", x: 50, y: 87 },
-  { name: "Whatnot", x: 24, y: 76 },
-  { name: "Poshmark", x: 13, y: 50 },
-  { name: "Etsy", x: 24, y: 24 },
+  { name: "eBay", logo: "ebay.svg", w: 66, x: 50, y: 13 },
+  { name: "Depop", logo: "depop.svg", w: 72, x: 76, y: 24 },
+  { name: "Mercari", logo: "mercari.svg", w: 74, x: 87, y: 50 },
+  { name: "Vinted", logo: "vinted.svg", w: 70, x: 76, y: 76 },
+  { name: "Facebook", logo: "facebook.svg", w: 76, x: 50, y: 87 },
+  { name: "Whatnot", logo: "whatnot.svg", w: 76, x: 24, y: 76 },
+  { name: "Poshmark", logo: "poshmark.png", w: 84, x: 13, y: 50 },
+  { name: "Etsy", logo: "etsy.svg", w: 56, x: 24, y: 24 },
 ];
 
 /** Decorative concept diagram, not a list of connected integrations. */
@@ -48,7 +57,7 @@ export function MarketplaceNetwork() {
         <div className="network-hub" aria-hidden="true"><span>f.</span><small>FAKELESS</small></div>
         {marketplaces.map((m) => (
           <div key={m.name} className="network-node" style={{ left: `${m.x}%`, top: `${m.y}%` }} aria-hidden="true">
-            <span>{m.name}</span>
+            <img src={asset(`marketplaces/${m.logo}`)} alt="" decoding="async" draggable={false} style={{ width: `${m.w}%` }} />
           </div>
         ))}
       </div>
