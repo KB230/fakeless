@@ -23,6 +23,11 @@ export default function Setup() {
   const tierParams = { categoryId, ...(profileId ? { profileId } : {}) };
   const tier = useResolveScreeningTier(tierParams, { query: { enabled: !!categoryId, queryKey: getResolveScreeningTierQueryKey(tierParams) } });
   const liveProfilesForCategory = profiles.data?.filter(p => p.kind === "model" && p.categoryId === categoryId && p.liveEnabled && p.referenceStatus === "documented") ?? [];
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const shownProfiles = (q ? liveProfilesForCategory.filter(p => `${p.brand} ${p.model} ${p.generation}`.toLowerCase().includes(q)) : liveProfilesForCategory)
+    .slice()
+    .sort((a, b) => `${a.brand} ${a.model}`.localeCompare(`${b.brand} ${b.model}`));
   const [condition, setCondition] = useState<ItemCondition | null>(null);
   const [price, setPrice] = useState("");
   const priceNum = Number(price);
@@ -45,14 +50,23 @@ export default function Setup() {
       <p className="mt-2 text-sm text-muted-foreground">Use your own clothes. Pick a category to see the available screening tier before taking photos.</p>
       <div className="mt-3 grid grid-cols-2 gap-2">
         {categories.isLoading ? <Skel className="h-20" /> : categories.isError ? <ErrorPanel message={apiError(categories.error).message} onRetry={() => categories.refetch()} /> : categories.data?.map(c => (
-          <button key={c.id} onClick={() => { setCategoryId(c.id); setProfileId(null); }} data-testid={`button-category-${c.id}`} aria-pressed={categoryId === c.id}
+          <button key={c.id} onClick={() => { setCategoryId(c.id); setProfileId(null); setQuery(""); }} data-testid={`button-category-${c.id}`} aria-pressed={categoryId === c.id}
             className={`min-h-24 rounded-xl border p-3 text-left ${categoryId === c.id ? "border-primary bg-primary/10" : "border-foreground/15 bg-card"}`}>
             <strong className="block text-sm">{c.name}</strong><span className="mt-1 block text-xs text-muted-foreground">{c.examples}</span>
           </button>
         ))}
       </div>
-      {categoryId && <button onClick={() => setProfileId(null)} aria-pressed={!profileId} className="mt-4 min-h-11 text-sm underline">Use the category checklist / no exact model</button>}
-      <div className="mt-2 space-y-2">
+      {categoryId && liveProfilesForCategory.length > 0 && (
+        <>
+          <h2 className="mt-6 font-mono text-xs font-semibold uppercase tracking-wider">Exact model ({liveProfilesForCategory.length})</h2>
+          <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search brand or model, e.g. Speedy, Birkin, Triple S"
+            data-testid="input-profile-search" aria-label="Search models"
+            className="mt-2 h-12 w-full rounded-xl border-2 border-foreground/10 bg-card px-3 text-sm outline-none focus:border-primary" />
+        </>
+      )}
+      {categoryId && <button onClick={() => setProfileId(null)} aria-pressed={!profileId} className="mt-2 min-h-11 text-sm underline">Use the category checklist / no exact model</button>}
+      {categoryId && q && shownProfiles.length === 0 && <p className="mt-2 rounded-xl bg-muted p-3 text-sm text-muted-foreground">No model matches "{query}". Use the category checklist instead.</p>}
+      <div className="mt-2 max-h-[28rem] space-y-2 overflow-y-auto">
         {!categoryId ? null : profiles.isLoading ? (
           <><Skel className="h-24" /><Skel className="h-24" /></>
         ) : profiles.isError ? (
@@ -60,11 +74,11 @@ export default function Setup() {
         ) : !profiles.data?.length ? (
           <p className="rounded-xl bg-muted p-4 text-sm text-muted-foreground">No product profiles are available yet.</p>
         ) : (
-          liveProfilesForCategory.map((p) => {
+          shownProfiles.map((p) => {
             const on = p.id === profileId;
             return (
               <button key={p.id} onClick={() => setProfileId(p.id)} data-testid={`button-profile-${p.id}`}
-                className={`relative w-full rounded-2xl border-2 p-4 text-left transition-all active:scale-[.99] ${on ? "border-primary bg-card" : "border-foreground/10 bg-card/60"}`}>
+                className={`relative w-full rounded-2xl border-2 p-3 text-left transition-all active:scale-[.99] ${on ? "border-primary bg-card" : "border-foreground/10 bg-card/60"}`}>
                 <div className="flex items-start gap-3">
                   <div className="min-w-0 flex-1">
                     <p className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">{p.brand} · {p.category}</p>
@@ -75,14 +89,7 @@ export default function Setup() {
                     {on && <CheckIcon className="h-4 w-4" />}
                   </span>
                 </div>
-                {p.referenceStatus === "demo" ? (
-                  <div className="mt-3 rounded-lg border border-dashed border-primary/50 bg-primary/5 p-2.5 text-xs">
-                    <span className="font-mono font-semibold text-primary">Demo references and sample codes</span>
-                    <p className="mt-0.5 text-muted-foreground">{p.referenceNote}</p>
-                  </div>
-                ) : (
-                  <p className="mt-3 text-xs text-muted-foreground"><span className="font-mono font-semibold text-foreground">Documented references</span> · {p.referenceNote}</p>
-                )}
+                {on && <p className="mt-2 text-xs text-muted-foreground">{p.steps.length} photo steps · {p.referenceNote}</p>}
               </button>
             );
           })
