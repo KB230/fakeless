@@ -12,7 +12,9 @@ export function apiError(e: unknown): { status: number | null; message: string }
   };
 }
 
-export async function downscaleImage(file: File, max = 1600, quality = 0.85): Promise<string> {
+// 1280px keeps stitching and tag text legible for the vision model while
+// cutting upload size (and time on mobile data) by roughly a third.
+export async function downscaleImage(file: File, max = 1280, quality = 0.82): Promise<string> {
   const url = URL.createObjectURL(file);
   try {
     const img = await new Promise<HTMLImageElement>((res, rej) => {
