@@ -288,11 +288,16 @@ export function decide(inputArg: RulesInput): CheckDecision {
  * - Superfakes pass most visual checks, so the score is capped at 95%.
  * With few usable photos the score is pulled toward 50% and marked low
  * confidence. Change the weights here as reviewed outcomes come in.
+ *
+ * Live test (Nov 2026, 10 items, genuine vs fake guide photos, 2 runs):
+ * soft signs appeared equally often on genuine and fake items (29 vs 29), so
+ * they now barely move the score and no longer cancel a step's clean credit.
+ * Clear signs hit fakes 7 times out of 10 and keep their strong weight.
  */
 const LR = {
   cleanTextStep: 1.6,
   cleanVisualStep: 1.25,
-  subjectiveSign: 0.75,
+  subjectiveSign: 0.92,
   maxSubjectivePerStep: 2,
   objectiveSign: 0.12,
   meaningfulDifference: 0.35,
@@ -341,9 +346,9 @@ function evidenceScore(
     for (const w of objective) add(`${step.title}: ${w.indicator}`, LR.objectiveSign);
     for (const w of subjective.slice(0, LR.maxSubjectivePerStep)) add(`${step.title}: ${w.indicator}`, LR.subjectiveSign);
     if (meaningful.length > 0) add(`${step.title}: visible difference from the reference`, LR.meaningfulDifference);
-    if (signs.length === 0 && meaningful.length === 0 && s.status === "ok") {
-      consistent++;
-      add(`${step.title}: no warning signs`, step.readsText ? LR.cleanTextStep : LR.cleanVisualStep);
+    if (objective.length === 0 && meaningful.length === 0 && s.status === "ok") {
+      if (signs.length === 0) consistent++;
+      add(`${step.title}: ${signs.length === 0 ? "no warning signs" : "no clear warning signs"}`, step.readsText ? LR.cleanTextStep : LR.cleanVisualStep);
     }
   }
   if (total === 0) return null;
