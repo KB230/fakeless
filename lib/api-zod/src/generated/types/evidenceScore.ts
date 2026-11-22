@@ -5,13 +5,22 @@
  * Fakeless API — counterfeit screening step for resale listings
  * OpenAPI spec version: 0.1.0
  */
+import type { EvidenceFactor } from './evidenceFactor';
+import type { EvidenceScoreConfidence } from './evidenceScoreConfidence';
 
 export interface EvidenceScore {
   /** Usable photo checks with no warning signs, differences or conflicts */
   consistent: number;
   /** Usable photo checks evaluated */
   total: number;
+  /** Research-weighted authenticity evidence score (5-95). Not a calibrated probability. */
   percent: number;
   /** Plain-language explanation of what the percentage means */
   label: string;
+  /** How much of the item the usable photos covered */
+  confidence: EvidenceScoreConfidence;
+  /** Share of required photo steps with a usable photo */
+  coveragePercent: number;
+  /** The findings that moved the score, strongest first */
+  factors: EvidenceFactor[];
 }
