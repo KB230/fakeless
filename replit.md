@@ -15,6 +15,7 @@ Mobile-first counterfeit screening step for clothing resellers: before publishin
 - API contract: `lib/api-spec/openapi.yaml`
 - DB schema: `lib/db/src/schema/checks.ts` (checks, check_photos)
 - Product profiles (add new clothing models here): `artifacts/api-server/src/config/profiles/`
+- Designer profiles (23 models: LV, Chanel, Hermès, Gucci, Dior, Prada, Goyard, Fendi, Bottega, Saint Laurent bags; Hermès/Gucci/Ferragamo belts; Balenciaga/Gucci/Golden Goose/Dior sneakers; Canada Goose/Burberry/Moncler outerwear): `config/profiles/designer/`. Built from published third-party legit-check guides (LegitGrails, FASHIONPHILE, LegitApp, Libas Collective, Collector's Cage) read Nov 2026; no reference photos, so steps are screened for warning signs like the TNF daypack. "(objective)" only marks photo-verifiable facts; contradictory guide claims (e.g. buckle shine) are left out. Sneaker box label vs size tag and Burberry care label vs size tag are cross-checked in `rules.ts`.
 - Reference/demo images: `artifacts/listing-check/public/references/<model>/`, `public/demo/`
 - Decision rules: `artifacts/api-server/src/lib/rules.ts`; vision prompt/schema: `lib/vision.ts`; TTS: `lib/voice.ts`
 - Demo cases (pre-recorded observations): `artifacts/api-server/src/config/demoCases.ts`
