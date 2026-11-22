@@ -124,16 +124,20 @@ export const goldenGooseSuperStar = defineProfile({
   sources: [SRC.lgSuperStar],
   presenceQuestions: [SIZE_TAG_QUESTION, BOX_LABEL_QUESTION],
   steps: [
-    SIDE(["heel counter of constant width; authentic heel counters widen toward the end", "holographic shine on the heel tab visible from the side"]),
+    // Removed after live testing (Nov 2026): "holographic heel tab shine" and the
+    // tongue label shape/thread/slant signs showed up identically on genuine and
+    // fake pairs, so they don't separate the two.
+    SIDE(["heel counter of constant width; authentic heel counters widen toward the end"]),
     step("star", "Star patch", "star photo",
       "Photograph the star on the side of the shoe straight on.",
       "Fill the frame with the star, straight on.",
-      ["the top point of the star cut off (objective)", "frayed star edges, or glitter that looks completely uniform"],
+      // "top point cut off" fired on genuine pairs in testing (the point tucks under the seam), so it is no longer objective.
+      ["the top point of the star clearly cut off while the rest of the star is fully visible", "frayed star edges, or glitter that looks completely uniform"],
       { framingTips: ["Whole star in frame", "Straight on"] }),
     step("tongue_label", "Tongue label", "tongue label photo",
       "Photograph the label on the tongue straight on.",
       "Fill the frame with the tongue label, straight on.",
-      ["label rectangular instead of square", "label stitched with white thread instead of black", "letters bold and heavily slanted"],
+      ["GOLDEN GOOSE or GGDB misspelled (objective)", "smudged or blurry label print"],
       { readsText: true, framingTips: ["Whole label in frame", "Straight on"] }),
     step("insole", "Insole", "insole photo",
       "Photograph the insole from directly above.",
@@ -143,7 +147,7 @@ export const goldenGooseSuperStar = defineProfile({
     step("outsole", "Outsole", "outsole photo",
       "Turn the shoe over and photograph the sole edge and tread from directly above.",
       "Show the whole outsole from directly above.",
-      ["few large, pointed zig-zags instead of many small, rounded ones"],
+      ["genuine outsoles have many small zig-zags with rounded points; few, large, sharply pointed zig-zags are a warning sign"],
       { framingTips: ["Whole sole in frame", "Even light"] }),
     SIZE_TAG(["the style code on the tongue label should match the box"]),
     BOX_LABEL,
