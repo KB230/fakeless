@@ -28,15 +28,17 @@ const bag = {
 /* ------------------------------------------------------------------ */
 
 /** LV date codes, shared by the Speedy and Neverfull. */
-const LV_DATE_CODE_SIGNS = [
+export const LV_DATE_CODE_SIGNS = [
   "from about 2007 the date code is two letters (factory) followed by four digits; digits 1 and 3 are the week and digits 2 and 4 the year (SR3179 = France, week 37 of 2019). A code in any other layout only fits pre-1990 pieces",
-  "the factory letters should agree with the country on the heat stamp: SR and SA are France, LA is USA, LM is Spain. A code whose factory country contradicts the MADE IN line on the same bag (objective, when both are clearly readable)",
+  "a week number (digits 1 and 3) above 52 cannot exist (objective)",
+  "the factory letters should agree with the country on the heat stamp. France: AR, AS, BA, BJ, CT, DU, FL, MI, NO, RA, RI, SA, SD, SL, SN, SP, SR, TH, TJ, VI. Spain: CA, GI, LB, LM, LO, LW, UB. USA: FC, FH, LA, OS, SD, TX. Italy: BO, CE, FO, MA, PL, RC, RO, TD. Some letters are shared (FL, SA, SD, LW), so only a clear contradiction counts. A code whose factory country contradicts the MADE IN line on the same bag (objective, when both are clearly readable)",
+  "a MADE IN CHINA heat stamp on a Louis Vuitton bag (objective)",
   "Louis Vuitton replaced printed date codes with an embedded microchip from about March 2021, so a code that decodes to 2022 or later is a strong warning sign",
   "thick, bold code characters or a shiny code tab; authentic codes are thin and pressed into matte leather that matches the bag's leather color",
   "a valid-looking code is not proof: counterfeiters copy real codes",
 ];
 
-const LV_DATE_CODE_QUESTION = {
+export const LV_DATE_CODE_QUESTION = {
   id: "date_code",
   question: "Can you find a stamped date code inside (two letters and four digits)?",
   help: "On the Speedy and Neverfull it is usually on the underside of the leather tab of the inside pocket. Bags made from about 2021 have a hidden microchip instead and no visible code.",
