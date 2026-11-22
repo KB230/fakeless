@@ -223,7 +223,17 @@ export function decide(inputArg: RulesInput): CheckDecision {
 
   applyWarningSigns(input, reasons, steps);
   crossCheckLabels(input, reasons, steps);
-  const evidence = evidenceScore(input, steps);
+  const evidence = evidenceScore(input, steps, reasons, washTag);
+  // Soft signs never block one at a time, but several together can pull the
+  // score below the review line; then a person should look.
+  const alreadyInReview = reasons.some((r) => r.code !== "missing_photo" && r.code !== "unusable_photo");
+  if (evidence && evidence.confidence !== "low" && evidence.percent < REVIEW_SCORE_BELOW && !alreadyInReview) {
+    reasons.push({
+      code: "warning_sign",
+      stepId: null,
+      message: `Several softer warning signs add up: the evidence score is ${evidence.percent}%. None is conclusive alone, so a person should look before it goes live.`,
+    });
+  }
 
   let outcome: CheckDecision["outcome"];
   let headline: string;
@@ -248,42 +258,122 @@ export function decide(inputArg: RulesInput): CheckDecision {
     outcome,
     tier,
     headline,
-    // When a retake is pending, only the photo problems are actionable.
-    reasons:
-      outcome === "retake_requested"
-        ? reasons.filter((r) => r.code === "missing_photo" || r.code === "unusable_photo")
-        : reasons,
+    // Best effort: even when photos still need a retake, every finding from
+    // the usable photos is reported, and the evidence score is computed from them.
+    reasons,
     retakes,
     washTag,
     steps,
-    evidence: outcome === "retake_requested" ? null : evidence,
+    evidence,
     decidedAt: new Date(),
     disclaimer: DISCLAIMER,
   };
 }
 
 /**
- * Evidence score: the share of usable photo checks that showed no warning
- * signs, visible differences or conflicts. It is computed from the checks,
- * not guessed by the model, and it is not a probability of authenticity.
+ * Authenticity evidence score — a research-weighted estimate, not a trained
+ * or calibrated probability (no labeled outcome data exists yet).
+ *
+ * Method: start from neutral odds (50%) and multiply by a likelihood ratio for
+ * each finding. The weights follow what published authentication guides
+ * (LegitGrails, FASHIONPHILE, Entrupy's State of the Fake reports) agree on:
+ * - Printed labels, stamps and codes are the most diagnostic areas, so a
+ *   clean text step counts more than a clean visual step.
+ * - Objective signs (misspellings, impossible code formats, labels that
+ *   disagree) are strong evidence against authenticity.
+ * - Subjective signs (stitching, font weight, shine) are weak: guides
+ *   contradict each other on them, and lighting changes them.
+ * - A matching code is weak support only: every guide warns counterfeiters
+ *   copy real codes.
+ * - Superfakes pass most visual checks, so the score is capped at 95%.
+ * With few usable photos the score is pulled toward 50% and marked low
+ * confidence. Change the weights here as reviewed outcomes come in.
  */
-function evidenceScore(input: RulesInput, steps: StepSummary[]): EvidenceScore | null {
+const LR = {
+  cleanTextStep: 1.6,
+  cleanVisualStep: 1.25,
+  subjectiveSign: 0.75,
+  maxSubjectivePerStep: 2,
+  objectiveSign: 0.12,
+  meaningfulDifference: 0.35,
+  codeMatch: 1.15,
+  codeMismatch: 0.25,
+  labelMismatch: 0.2,
+  expectedTagAbsent: 0.5,
+} as const;
+
+/** Scores below this (with medium or high confidence) go to manual review. */
+const REVIEW_SCORE_BELOW = 50;
+
+function evidenceScore(
+  input: RulesInput,
+  steps: StepSummary[],
+  reasons: DecisionReason[],
+  washTag: WashTagComparison | null,
+): EvidenceScore | null {
+  const { profile, presence, observations } = input;
+  let odds = 1;
+  const factors: { label: string; direction: "supports" | "weakens" | "strong_against"; weight: number }[] = [];
+  const add = (label: string, lr: number) => {
+    odds *= lr;
+    factors.push({ label, direction: lr >= 1 ? "supports" : lr <= 0.3 ? "strong_against" : "weakens", weight: Math.abs(Math.log(lr)) });
+  };
+
   let total = 0;
   let consistent = 0;
-  for (const s of steps) {
-    const obs = input.observations[s.stepId];
-    if (!obs || !obs.quality.usable || s.status === "skipped" || s.status === "missing" || s.status === "retake") continue;
+  let requiredExpected = 0;
+  let requiredUsable = 0;
+  for (const step of profile.steps) {
+    const s = steps.find((x) => x.stepId === step.id);
+    const absent = step.presenceQuestionId && presence[step.presenceQuestionId] === false;
+    const obs = observations[step.id];
+    const usable = !!obs && obs.quality.usable && s?.status !== "retake";
+    if (step.required && !absent) {
+      requiredExpected++;
+      if (usable) requiredUsable++;
+    }
+    if (!usable || !s || s.status === "skipped") continue;
     total++;
-    const hasSigns = (s.warningSigns?.length ?? 0) > 0;
-    if (s.status === "ok" && !hasSigns) consistent++;
+    const signs = s.warningSigns ?? [];
+    const objective = signs.filter((w) => w.kind === "objective");
+    const subjective = signs.filter((w) => w.kind !== "objective");
+    const meaningful = obs!.differences.filter((d) => d.severity === "meaningful");
+    for (const w of objective) add(`${step.title}: ${w.indicator}`, LR.objectiveSign);
+    for (const w of subjective.slice(0, LR.maxSubjectivePerStep)) add(`${step.title}: ${w.indicator}`, LR.subjectiveSign);
+    if (meaningful.length > 0) add(`${step.title}: visible difference from the reference`, LR.meaningfulDifference);
+    if (signs.length === 0 && meaningful.length === 0 && s.status === "ok") {
+      consistent++;
+      add(`${step.title}: no warning signs`, step.readsText ? LR.cleanTextStep : LR.cleanVisualStep);
+    }
   }
   if (total === 0) return null;
-  const percent = Math.round((consistent / total) * 100);
+
+  if (washTag?.result === "match") add("Style code matches a documented code", LR.codeMatch);
+  if (washTag?.result === "mismatch") add("Style code doesn't match the documented codes", LR.codeMismatch);
+  for (const r of reasons) {
+    if (r.code === "label_mismatch") add("Two labels on the item disagree", LR.labelMismatch);
+    if (r.code === "tag_absent") add("An expected tag or label is missing", LR.expectedTagAbsent);
+  }
+
+  const coverage = requiredExpected === 0 ? 1 : requiredUsable / requiredExpected;
+  const confidence: EvidenceScore["confidence"] =
+    coverage >= 0.8 && total >= 4 ? "high" : coverage >= 0.5 && total >= 2 ? "medium" : "low";
+  const raw = odds / (1 + odds);
+  const shrink = confidence === "high" ? 1 : confidence === "medium" ? 0.75 : 0.45;
+  const percent = Math.round(Math.min(95, Math.max(5, (0.5 + (raw - 0.5) * shrink) * 100)));
+
+  const coveragePercent = Math.round(coverage * 100);
   return {
     consistent,
     total,
     percent,
-    label: `${consistent} of ${total} photo checks showed no warning signs. This is the share of checks passed, not a probability that the item is authentic.`,
+    confidence,
+    coveragePercent,
+    factors: factors
+      .sort((a, b) => b.weight - a.weight)
+      .slice(0, 8)
+      .map(({ label, direction }) => ({ label, direction })),
+    label: `Estimate from ${total} usable photo check${total === 1 ? "" : "s"} (${coveragePercent}% of the required photos), weighted by how strongly published authentication guides rate each finding. ${confidence === "low" ? "Few photos were usable, so this is a rough estimate. " : ""}It is not a guarantee: superfakes can pass every photo check.`,
   };
 }
 
@@ -316,6 +406,11 @@ function compareCodes(
     return { observedCode: null, expectedCodes, rawText, result: "not_compared" };
   }
   const codes = usableTagObs.flatMap((o) => o.codes);
+  // Nothing documented to compare against: record what was read, but don't
+  // send the listing to review just because a code's purpose is unclear.
+  if (expectedCodes.length === 0) {
+    return { observedCode: codes[0]?.value ?? null, expectedCodes, rawText, result: "not_compared" };
+  }
   const identified = codes.filter((c) => c.purposeIdentified && COMPARABLE_CODE_TYPES.has(c.codeType));
   const unidentified = codes.filter((c) => !c.purposeIdentified || c.codeType === "unknown");
   const codesAreSamples = profile.expectedCodes.length > 0 && profile.expectedCodes.every((c) => c.isSample);
