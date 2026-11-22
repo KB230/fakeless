@@ -3,6 +3,7 @@ import { arcteryxBetaLt } from "./arcteryx-beta-lt";
 import { nikeAf1White } from "./nike-af1-07-white";
 import { tnfNuptse } from "./tnf-nuptse";
 import { tnfBackpack } from "./tnf-backpack";
+import { DESIGNER_PROFILES } from "./designer";
 import {
   basicScreening,
   handbagsChecklist,
@@ -25,6 +26,7 @@ export const PROFILES: ProductProfile[] = [
   nikeAf1White,
   tnfNuptse,
   tnfBackpack,
+  ...DESIGNER_PROFILES,
   sneakersChecklist,
   streetwearChecklist,
   outerwearChecklist,

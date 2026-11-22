@@ -15,6 +15,7 @@ import type {
 import { retakeMessage, retakeVoicePromptId, type RetakeKind } from "../config/voicePrompts";
 import { AF1_STYLE_CODE_PATTERN } from "../config/profiles/nike-af1-07-white";
 import { TNF_STYLE_CODE_PATTERN } from "../config/profiles/tnf-backpack";
+import { DESIGNER_SNEAKER_IDS } from "../config/profiles/designer";
 
 /**
  * Documented style-code formats per model profile. A code that matches the
@@ -405,6 +406,10 @@ const LABEL_CROSS_CHECKS: Record<string, { a: string; b: string; label: string }
   "category-sneakers": [{ a: "box_label", b: "size_tag", label: "box label and size tag" }],
   "nike-af1-07-white": [{ a: "box_label", b: "size_tag", label: "box label and size tag" }],
   "tnf-backpack": [{ a: "hang_tag", b: "interior_tag", label: "hang tag and inside label" }],
+  ...Object.fromEntries(
+    DESIGNER_SNEAKER_IDS.map((id) => [id, [{ a: "box_label", b: "size_tag", label: "box label and size tag" }]]),
+  ),
+  "burberry-trench": [{ a: "wash_tag", b: "size_tag", label: "care label and size tag" }],
 };
 
 const US_SIZE = /\bUS\s*(?:M(?:EN'?S)?\s*)?(\d{1,2}(?:\.5)?)\b/i;

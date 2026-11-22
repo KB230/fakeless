@@ -12,7 +12,7 @@ import type {
  * step, presence question or voice instruction changes, so stored decisions
  * can be traced back to the config that produced them.
  */
-export const PROFILE_SET_VERSION = "2026-11-20.2";
+export const PROFILE_SET_VERSION = "2026-11-21.1";
 
 export type RetakeKind = "blurry" | "cropped" | "angle" | "missing";
 export const RETAKE_KINDS: RetakeKind[] = ["blurry", "cropped", "angle", "missing"];
